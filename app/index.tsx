@@ -1,54 +1,102 @@
-import {View, Text, Dimensions} from "react-native";
-import React, {useCallback, useState} from "react";
-import {GestureHandlerRootView} from "react-native-gesture-handler";
-import Background from "@/components/Background";
-import Piece from "@/components/Piece";
-import {useConst} from "@/hooks/useConst";
-import {Chess} from "chess.js";
-import {SIZE} from "@/utils/chessUtils";
+import React from 'react';
+import { View, StyleSheet, Image, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { IconButton, Button } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { Colors } from '@/constants/Colors';
 
 const {width} = Dimensions.get("window");
 
 export default function index() {
-  const chess = useConst(() => new Chess());
-  const [state, setState] = useState({
-    player: "w",
-    board: chess.board(),
-  });
-
-  const onTurn = useCallback(() => {
-    setTimeout(() => {
-      setState((prev) => ({
-        player: prev.player === "w" ? "b" : "w",
-        board: chess.board(),
-      }));
-    }, 200);
-  }, [chess, state.player]);
+  const router = useRouter();
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <View
-        style={{flex: 1, justifyContent: "center", backgroundColor: "black"}}
-      >
-        <View style={{width, height: width}}>
-          <Background />
-          {state.board.map((row, rowIndex) =>
-            row.map((square, colIndex) => {
-              if (square === null) return null;
-              return (
-                <Piece
-                  key={`${rowIndex}${colIndex}`}
-                  id={`${square.color}${square.type}` as const}
-                  position={{x: colIndex * SIZE, y: rowIndex * SIZE}}
-                  chess={chess}
-                  onTurn={onTurn}
-                  enabled={state.player === square.color}
-                />
-              );
-            })
-          )}
-        </View>
+    <View style={styles.container}>
+
+      <View style={styles.logoContainer}>
+        <Image source={require('../assets/chess/bb.png')} style={styles.logo} />
+        <Text style={styles.title}>CHECKMATE!</Text>
+        <Text style={styles.subtitle}>Trải nghiệm cờ vua đỉnh cao</Text>
       </View>
-    </GestureHandlerRootView>
+
+      <View>
+        <Image source={require('../assets/images/home_image.png')} style={{ width: '100%', height: 200 }} />
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <GameButton icon="web" text="Chơi Trực tuyến" />
+        <GameButton icon="robot" text="Chơi với Máy tính" onPress={() => {
+          router.push("/play-with-bot");
+        }}/>
+        <GameButton icon="account-group" text="Chơi với bạn bè" />
+        <GameButton icon="cog" text="Cài đặt" />
+      </View>
+    </View>
   );
 }
+
+// Component cho nút
+const GameButton = ({
+  icon,
+  text,
+  onPress,
+}: {
+  icon: string;
+  text: string;
+  onPress?: () => void;
+}) => (
+  <TouchableOpacity style={styles.button} onPress={onPress}>
+    <Icon name={icon} size={24} color={Colors.DARKBLUE} />
+    <Text style={styles.buttonText}>{text}</Text>
+  </TouchableOpacity>
+);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.WHITE,
+    padding: 20,
+    justifyContent: 'space-between',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginVertical: 30,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.GREY,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.LIGHTBLUE,
+    padding: 15,
+    borderRadius: 12,
+    marginVertical: 10,
+    width: '48%',
+    height: width / 5,
+  },
+  buttonText: {
+    fontSize: 14,
+    color: Colors.DARKBLUE,
+    marginLeft: 10,
+    fontWeight: 'bold',
+  },
+});
