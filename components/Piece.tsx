@@ -1,4 +1,4 @@
-import {View, Text, Image} from "react-native";
+import {Image} from "react-native";
 import React, {useCallback, useState} from "react";
 import Animated, {
   runOnJS,
@@ -9,7 +9,7 @@ import Animated, {
 import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import {Vector} from "react-native-redash";
 import {SIZE, toPosition, toTranslation} from "@/utils/chessUtils";
-import {Chess, Position} from "chess.js";
+import {Chess, Position, Move} from "chess.js";
 
 type Player = "b" | "w";
 type Type = "q" | "r" | "n" | "b" | "k" | "p";
@@ -34,7 +34,7 @@ interface PieceProps {
   id: Piece;
   position: Vector;
   chess: Chess;
-  onTurn: () => void;
+  onTurn: (move: Move) => void;
   enabled: boolean;
 }
 
@@ -115,7 +115,7 @@ const Piece = ({id, position, chess, onTurn, enabled}: PieceProps) => {
       });
       if (move) {
         chess.move(move);
-        onTurn();
+        onTurn(move);
       }
       setValidMoves([]);
     },

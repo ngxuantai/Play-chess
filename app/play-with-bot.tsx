@@ -1,14 +1,23 @@
-import {View, Text, Dimensions, TouchableOpacity, StyleSheet, Image} from "react-native";
+import {
+  View,
+  Text,
+  Dimensions,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from "react-native";
 import React, {useCallback, useState} from "react";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
+import MoveHistory from "@/components/MoveHistory";
+import ConfirmationDialog from "@/components/ConfirmDialog";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
 import {useConst} from "@/hooks/useConst";
-import {Chess} from "chess.js";
+import {Chess, Move} from "chess.js";
 import {SIZE} from "@/utils/chessUtils";
-import { useRouter } from "expo-router";
+import {useRouter} from "expo-router";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { Colors } from "@/constants/Colors";
+import {Colors} from "@/constants/Colors";
 
 const {width} = Dimensions.get("window");
 
@@ -19,40 +28,73 @@ export default function PlayWithBot() {
     player: "w",
     board: chess.board(),
   });
+  const [moveHistory, setMoveHistory] = useState<Move[]>([]);
+  const [isDialogVisible, setDialogVisible] = useState(false);
 
-  const onTurn = useCallback(() => {
-    setTimeout(() => {
-      setState((prev) => ({
-        player: prev.player === "w" ? "b" : "w",
-        board: chess.board(),
-      }));
-    }, 200);
-  }, [chess, state.player]);
+  const onTurn = useCallback(
+    (move: Move) => {
+      setMoveHistory((prev) => [...prev, move]);
+      setTimeout(() => {
+        setState((prev) => ({
+          player: prev.player === "w" ? "b" : "w",
+          board: chess.board(),
+        }));
+      }, 200);
+    },
+    [chess, state.player]
+  );
+
+  const resetBoard = () => {
+    chess.reset();
+    setState({
+      player: "w",
+      board: chess.board(),
+    });
+    setMoveHistory([]);
+    setDialogVisible(false);
+  };
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Icon name="arrow-left" size={24} color={Colors.BLACK} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Checkmate!</Text>
-      </View>
-
       <View style={styles.status}>
         <View style={styles.statusBar}>
-          <Text style={styles.statusText}>Đang chờ hành động đầu tiên...</Text>
+          {moveHistory.length === 0 ? (
+            <Text style={styles.statusText}>
+              Đang chờ hành động đầu tiên...
+            </Text>
+          ) : (
+            <MoveHistory moveHistory={moveHistory} />
+          )}
         </View>
-        <TouchableOpacity style={styles.refreshButton} onPress={() => console.log("Refresh game")}>
-          <Icon name="refresh" size={24} color="#2F80ED" />
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={() => setDialogVisible(true)}
+        >
+          <Icon
+            name="refresh"
+            size={24}
+            color="#2F80ED"
+          />
         </TouchableOpacity>
+        <ConfirmationDialog
+          visible={isDialogVisible}
+          text="Bắt đầu bàn cờ mới?"
+          onConfirm={resetBoard}
+          onCancel={() => setDialogVisible(false)}
+        />
       </View>
-
-      <View style={styles.opponentInfo}>
-        <Image source={require('../assets/chess/bk.png')} style={styles.playerIcon} />
-        <Text style={styles.playerText}>Máy tính (200)</Text>
+      <View
+        style={[
+          styles.playerInfo,
+          state.player === "b" && styles.currentPlayer,
+        ]}
+      >
+        <Image
+          source={require("../assets/chess/bk.png")}
+          style={styles.playerIcon}
+        />
+        <Text style={styles.playerText}>Máy tính</Text>
       </View>
-
       <View
         style={{
           justifyContent: "center",
@@ -78,12 +120,18 @@ export default function PlayWithBot() {
           )}
         </View>
       </View>
-
-      <View style={styles.playerInfo}>
-        <Image source={require('../assets/chess/wk.png')} style={styles.playerIcon} />
+      <View
+        style={[
+          styles.playerInfo,
+          state.player === "w" && styles.currentPlayer,
+        ]}
+      >
+        <Image
+          source={require("../assets/chess/wk.png")}
+          style={styles.playerIcon}
+        />
         <Text style={styles.playerText}>Bạn</Text>
       </View>
-
     </GestureHandlerRootView>
   );
 }
@@ -92,19 +140,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.WHITE,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingTop: 40,
-    paddingBottom: 10,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginLeft: 10,
-    color: Colors.BLACK,
   },
   status: {
     flexDirection: "row",
@@ -120,6 +155,7 @@ const styles = StyleSheet.create({
     width: "85%",
   },
   statusText: {
+    padding: 4,
     fontSize: 16,
     color: "#718096",
   },
@@ -129,21 +165,16 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginLeft: "auto",
   },
-  opponentInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    marginHorizontal: 15,
-    marginVertical: 10,
-  },
   playerInfo: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.LIGHTBLUE,
     padding: 10,
     marginHorizontal: 15,
     borderRadius: 10,
     marginVertical: 10,
+  },
+  currentPlayer: {
+    backgroundColor: Colors.LIGHTBLUE,
   },
   playerIcon: {
     width: 50,

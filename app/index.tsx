@@ -1,10 +1,16 @@
-import React from 'react';
-import { View, StyleSheet, Image, Text, TouchableOpacity, Dimensions } from 'react-native';
-import { IconButton, Button } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Link } from 'expo-router';
-import { useRouter } from 'expo-router';
-import { Colors } from '@/constants/Colors';
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  Image,
+  Text,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import {IconButton, Button} from "react-native-paper";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import {useRouter} from "expo-router";
+import {Colors} from "@/constants/Colors";
 
 const {width} = Dimensions.get("window");
 
@@ -13,24 +19,42 @@ export default function index() {
 
   return (
     <View style={styles.container}>
-
       <View style={styles.logoContainer}>
-        <Image source={require('../assets/chess/bb.png')} style={styles.logo} />
+        <Image
+          source={require("../assets/chess/bb.png")}
+          style={styles.logo}
+        />
         <Text style={styles.title}>CHECKMATE!</Text>
         <Text style={styles.subtitle}>Trải nghiệm cờ vua đỉnh cao</Text>
       </View>
 
       <View>
-        <Image source={require('../assets/images/home_image.png')} style={{ width: '100%', height: 200 }} />
+        <Image
+          source={require("../assets/images/home_image.png")}
+          style={{width: "100%", height: 200}}
+        />
       </View>
 
       <View style={styles.buttonContainer}>
-        <GameButton icon="web" text="Chơi Trực tuyến" />
-        <GameButton icon="robot" text="Chơi với Máy tính" onPress={() => {
-          router.push("/play-with-bot");
-        }}/>
-        <GameButton icon="account-group" text="Chơi với bạn bè" />
-        <GameButton icon="cog" text="Cài đặt" />
+        <GameButton
+          icon="web"
+          text="Chơi Trực tuyến"
+        />
+        <GameButton
+          icon="robot"
+          text="Chơi với Máy tính"
+          onPress={() => {
+            router.push("/play-with-bot");
+          }}
+        />
+        <GameButton
+          icon="account-group"
+          text="Chơi với bạn bè"
+        />
+        <GameButton
+          icon="cog"
+          text="Cài đặt"
+        />
       </View>
     </View>
   );
@@ -46,8 +70,15 @@ const GameButton = ({
   text: string;
   onPress?: () => void;
 }) => (
-  <TouchableOpacity style={styles.button} onPress={onPress}>
-    <Icon name={icon} size={24} color={Colors.DARKBLUE} />
+  <TouchableOpacity
+    style={styles.button}
+    onPress={onPress}
+  >
+    <Icon
+      name={icon}
+      size={24}
+      color={Colors.DARKBLUE}
+    />
     <Text style={styles.buttonText}>{text}</Text>
   </TouchableOpacity>
 );
@@ -57,10 +88,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.WHITE,
     padding: 20,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 30,
   },
   logo: {
@@ -70,7 +101,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.BLACK,
   },
   subtitle: {
@@ -78,25 +109,25 @@ const styles = StyleSheet.create({
     color: Colors.GREY,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.LIGHTBLUE,
-    padding: 15,
+    padding: 10,
     borderRadius: 12,
     marginVertical: 10,
-    width: '48%',
+    width: "48%",
     height: width / 5,
   },
   buttonText: {
     fontSize: 14,
     color: Colors.DARKBLUE,
     marginLeft: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
