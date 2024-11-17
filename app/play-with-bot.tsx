@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   statusText: {
     padding: 4,
     fontSize: 16,
-    color: "#718096",
+    color: Colors.BLACK,
   },
   refreshButton: {
     backgroundColor: Colors.LIGHTBLUE,
@@ -184,6 +184,6 @@ const styles = StyleSheet.create({
   playerText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#2D3748",
+    color: Colors.BLACK,
   },
 });
