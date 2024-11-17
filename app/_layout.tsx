@@ -11,6 +11,11 @@ export default function RootLayout() {
         name="play-with-bot"
         options={{title: "Chơi với máy"}}
       />
+      <Stack.Screen
+        name="settings"
+        options={{title: "Cài đặt"}}
+      />
     </Stack>
+    
   );
 }
