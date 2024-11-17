@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import React, {useCallback, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
@@ -18,6 +18,7 @@ import {SIZE} from "@/utils/chessUtils";
 import {useRouter} from "expo-router";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import {Colors} from "@/constants/Colors";
+import {getBestMove} from "@/utils/chessBot";
 
 const {width} = Dimensions.get("window");
 
@@ -33,16 +34,32 @@ export default function PlayWithBot() {
 
   const onTurn = useCallback(
     (move: Move) => {
-      setMoveHistory((prev) => [...prev, move]);
-      setTimeout(() => {
-        setState((prev) => ({
-          player: prev.player === "w" ? "b" : "w",
+      if (state.player === "w") {
+        setMoveHistory((prev) => [...prev, move]);
+        setState({
+          player: "b",
           board: chess.board(),
-        }));
-      }, 200);
+        });
+      }
     },
     [chess, state.player]
   );
+
+  const makeBotMove = useCallback(() => {
+    const bestMove = getBestMove(chess, 3, false);
+    const movelog = chess.move(bestMove);
+    setMoveHistory((prev) => [...prev, movelog]);
+    setState({
+      player: "w",
+      board: chess.board(),
+    });
+  }, [chess]);
+
+  useEffect(() => {
+    if (state.player === "b") {
+      makeBotMove();
+    }
+  }, [state.player, makeBotMove]);
 
   const resetBoard = () => {
     chess.reset();
