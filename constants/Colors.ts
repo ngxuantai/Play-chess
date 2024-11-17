@@ -12,6 +12,15 @@ export const Colors = {
   GREY: "#b7b7b7"
 };
 
+export const backgroundTheme = [
+  { name: "Cappuccino", colors: ["#85634b", "#b7a58b"] },
+  { name: "Greenwich", colors: ["#749757", "#efefd7"] },
+  { name: "Riviera", colors: ["#89b0fd", "#e2eefe"] },
+  { name: "Iceberg", colors: ["#bac7d0", "#f1f0f5"] },
+  { name: "Honeymoon", colors: ["#d18c49", "#ffcea1"] },
+  { name: "Lavender", colors: ["#ab8fbf", "#f1e4f6"] },
+];
+
 // export const Colors = {
 //   light: {
 //     text: '#11181C',

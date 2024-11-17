@@ -12,6 +12,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Colors } from "@/constants/Colors";
 import { Divider } from "react-native-paper";
+import BackgroundSetting from "@/components/BackgroundSetting";
 
 export default function Settings() {
   return (
@@ -45,10 +46,11 @@ export default function Settings() {
           <SettingRow icon="vibrate" text="Rung" isToggle />
         </View>
 
-        {/* <View style={styles.container}>
+        <View style={styles.container}>
           <Text style={styles.titleText}>Bàn cờ và quân cờ</Text>
           <Divider style={styles.divider} />
-        </View> */}
+          <BackgroundSetting />
+        </View>
 
         <View style={styles.container}>
           <Text style={styles.titleText}>Tùy chọn trò chơi</Text>
@@ -100,6 +102,7 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingVertical: 10,
   },
   titleText: {
     fontSize: 16,
