@@ -54,6 +54,9 @@ export default function index() {
         <GameButton
           icon="cog"
           text="Cài đặt"
+          onPress={() => {
+            router.push("/settings");
+          }}
         />
       </View>
     </View>
