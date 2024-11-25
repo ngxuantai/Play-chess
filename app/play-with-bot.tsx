@@ -6,21 +6,21 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import React, {useCallback, useEffect, useState} from "react";
-import {GestureHandlerRootView} from "react-native-gesture-handler";
+import React, { useCallback, useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
-import {useConst} from "@/hooks/useConst";
-import {Chess, Move} from "chess.js";
-import {SIZE} from "@/utils/chessUtils";
-import {useRouter} from "expo-router";
+import { useConst } from "@/hooks/useConst";
+import { Chess, Move } from "chess.js";
+import { SIZE } from "@/utils/chessUtils";
+import { useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import {Colors} from "@/constants/Colors";
-import {getBestMove} from "@/utils/chessBot";
+import { Colors } from "@/constants/Colors";
+import { getBestMove } from "@/utils/chessBot";
 
-const {width} = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export default function PlayWithBot() {
   const router = useRouter();
@@ -72,7 +72,7 @@ export default function PlayWithBot() {
   };
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.status}>
         <View style={styles.statusBar}>
           {moveHistory.length === 0 ? (
@@ -87,11 +87,7 @@ export default function PlayWithBot() {
           style={styles.refreshButton}
           onPress={() => setDialogVisible(true)}
         >
-          <Icon
-            name="refresh"
-            size={24}
-            color="#2F80ED"
-          />
+          <Icon name="refresh" size={24} color={Colors.DARKBLUE} />
         </TouchableOpacity>
         <ConfirmationDialog
           visible={isDialogVisible}
@@ -118,7 +114,7 @@ export default function PlayWithBot() {
           alignItems: "center",
         }}
       >
-        <View style={{width, height: width}}>
+        <View style={{ width, height: width }}>
           <Background />
           {state.board.map((row, rowIndex) =>
             row.map((square, colIndex) => {
@@ -127,7 +123,7 @@ export default function PlayWithBot() {
                 <Piece
                   key={`${rowIndex}${colIndex}`}
                   id={`${square.color}${square.type}` as const}
-                  position={{x: colIndex * SIZE, y: rowIndex * SIZE}}
+                  position={{ x: colIndex * SIZE, y: rowIndex * SIZE }}
                   chess={chess}
                   onTurn={onTurn}
                   enabled={state.player === square.color}
