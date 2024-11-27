@@ -1,16 +1,17 @@
-import {View, Text} from "react-native";
+import { View, Text } from "react-native";
 import React from "react";
-import {Colors} from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 
 interface RowProps {
   row: number;
+  flip: boolean;
 }
 
 interface SquareProps extends RowProps {
   col: number;
 }
 
-const Square = ({row, col}: SquareProps) => {
+const Square = ({ row, col, flip }: SquareProps) => {
   const backgroundColor = (row + col) % 2 === 0 ? Colors.WHITE : Colors.GREEN;
   const color = (row + col) % 2 === 0 ? Colors.BLACK : Colors.WHITE;
   return (
@@ -27,7 +28,7 @@ const Square = ({row, col}: SquareProps) => {
           color,
           fontSize: 12,
           fontWeight: "500",
-          opacity: col > 0 ? 0 : 1,
+          opacity: (flip ? col < 7 : col > 0) ? 0 : 1,
         }}
       >
         {8 - row}
@@ -38,7 +39,7 @@ const Square = ({row, col}: SquareProps) => {
           fontSize: 12,
           fontWeight: "500",
           alignSelf: "flex-end",
-          opacity: row < 7 ? 0 : 1,
+          opacity: (flip ? row > 0 : row < 7) ? 0 : 1,
         }}
       >
         {String.fromCharCode("a".charCodeAt(0) + col)}
@@ -47,14 +48,15 @@ const Square = ({row, col}: SquareProps) => {
   );
 };
 
-const Row = ({row}: RowProps) => {
+const Row = ({ row, flip }: RowProps) => {
   return (
-    <View style={{flex: 1, flexDirection: "row"}}>
+    <View style={{ flex: 1, flexDirection: "row" }}>
       {new Array(8).fill(null).map((_, col) => (
         <Square
           key={col}
           row={row}
-          col={col}
+          col={flip ? 7 - col : col}
+          flip={flip}
         />
       ))}
     </View>

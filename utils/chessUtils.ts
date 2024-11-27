@@ -1,12 +1,12 @@
 /* eslint-disable prefer-destructuring */
-import {Position} from "chess.js";
-import {Dimensions} from "react-native";
-import {Vector} from "react-native-redash";
+import { Position } from "chess.js";
+import { Dimensions } from "react-native";
+import { Vector } from "react-native-redash";
 
-const {width} = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 export const SIZE = width / 8;
 
-export const toTranslation = (to: Position) => {
+export const toTranslation = (to: Position, flip: boolean) => {
   "worklet";
   // worklet don't support destructuring yet
   const tokens = to.split("");
@@ -20,14 +20,16 @@ export const toTranslation = (to: Position) => {
     y: parseInt(row, 10) - 1,
   };
   return {
-    x: indexes.x * SIZE,
-    y: 7 * SIZE - indexes.y * SIZE,
+    x: (flip ? 7 - indexes.x : indexes.x) * SIZE,
+    y: (flip ? indexes.y : 7 - indexes.y) * SIZE,
   };
 };
 
-export const toPosition = ({x, y}: Vector) => {
+export const toPosition = ({ x, y }: Vector, flip: boolean) => {
   "worklet";
-  const col = String.fromCharCode(97 + Math.round(x / SIZE));
-  const row = `${8 - Math.round(y / SIZE)}`;
+  const col = String.fromCharCode(
+    97 + (flip ? 7 - Math.round(x / SIZE) : Math.round(x / SIZE))
+  );
+  const row = `${flip ? Math.round(y / SIZE) + 1 : 8 - Math.round(y / SIZE)}`;
   return `${col}${row}` as Position;
 };

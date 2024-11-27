@@ -6,8 +6,9 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import SidePickerModal from "@/components/SidePickerModal";
 import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
 import Background from "@/components/Background";
@@ -15,7 +16,6 @@ import Piece from "@/components/Piece";
 import { useConst } from "@/hooks/useConst";
 import { Chess, Move } from "chess.js";
 import { SIZE } from "@/utils/chessUtils";
-import { useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 import { getBestMove } from "@/utils/chessBot";
@@ -23,8 +23,8 @@ import { getBestMove } from "@/utils/chessBot";
 const { width } = Dimensions.get("window");
 
 export default function PlayWithBot() {
-  const router = useRouter();
   const chess = useConst(() => new Chess());
+  const [side, setSide] = useState<string>("");
   const [state, setState] = useState({
     player: "w",
     board: chess.board(),
@@ -45,21 +45,21 @@ export default function PlayWithBot() {
     [chess, state.player]
   );
 
-  const makeBotMove = useCallback(() => {
-    const bestMove = getBestMove(chess, 3, false);
-    const movelog = chess.move(bestMove);
-    setMoveHistory((prev) => [...prev, movelog]);
-    setState({
-      player: "w",
-      board: chess.board(),
-    });
-  }, [chess]);
+  // const makeBotMove = useCallback(() => {
+  //   const bestMove = getBestMove(chess, 3, false);
+  //   const movelog = chess.move(bestMove);
+  //   setMoveHistory((prev) => [...prev, movelog]);
+  //   setState({
+  //     player: "w",
+  //     board: chess.board(),
+  //   });
+  // }, [chess]);
 
-  useEffect(() => {
-    if (state.player === "b") {
-      makeBotMove();
-    }
-  }, [state.player, makeBotMove]);
+  // useEffect(() => {
+  // if (state.player === "b") {
+  //   makeBotMove();
+  // }
+  // }, [state.player, makeBotMove]);
 
   const resetBoard = () => {
     chess.reset();
@@ -71,8 +71,31 @@ export default function PlayWithBot() {
     setDialogVisible(false);
   };
 
+  const renderBoard = useMemo(() => {
+    return state.board.map((row, rowIndex) =>
+      row.map((square, colIndex) => {
+        if (square === null) return null;
+        return (
+          <Piece
+            key={`${rowIndex}${colIndex}`}
+            id={`${square.color}${square.type}` as const}
+            position={{
+              x: (side === "b" ? 7 - colIndex : colIndex) * SIZE,
+              y: (side === "b" ? 7 - rowIndex : rowIndex) * SIZE,
+            }}
+            chess={chess}
+            flip={side !== "" && side === "b"}
+            onTurn={onTurn}
+            enabled={state.player === side && side !== ""}
+          />
+        );
+      })
+    );
+  }, [state.board, side, chess, state.player]);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <SidePickerModal onSelectSide={setSide} />
       <View style={styles.status}>
         <View style={styles.statusBar}>
           {moveHistory.length === 0 ? (
@@ -87,7 +110,11 @@ export default function PlayWithBot() {
           style={styles.refreshButton}
           onPress={() => setDialogVisible(true)}
         >
-          <Icon name="refresh" size={24} color={Colors.DARKBLUE} />
+          <Icon
+            name="refresh"
+            size={24}
+            color={Colors.DARKBLUE}
+          />
         </TouchableOpacity>
         <ConfirmationDialog
           visible={isDialogVisible}
@@ -99,11 +126,15 @@ export default function PlayWithBot() {
       <View
         style={[
           styles.playerInfo,
-          state.player === "b" && styles.currentPlayer,
+          state.player !== side && side !== "" ? styles.currentPlayer : null,
         ]}
       >
         <Image
-          source={require("../assets/chess/bk.png")}
+          source={
+            side === "w"
+              ? require("../assets/chess/bk.png")
+              : require("../assets/chess/wk.png")
+          }
           style={styles.playerIcon}
         />
         <Text style={styles.playerText}>Máy tính</Text>
@@ -115,32 +146,22 @@ export default function PlayWithBot() {
         }}
       >
         <View style={{ width, height: width }}>
-          <Background />
-          {state.board.map((row, rowIndex) =>
-            row.map((square, colIndex) => {
-              if (square === null) return null;
-              return (
-                <Piece
-                  key={`${rowIndex}${colIndex}`}
-                  id={`${square.color}${square.type}` as const}
-                  position={{ x: colIndex * SIZE, y: rowIndex * SIZE }}
-                  chess={chess}
-                  onTurn={onTurn}
-                  enabled={state.player === square.color}
-                />
-              );
-            })
-          )}
+          <Background flip={side !== "" && side === "b"} />
+          {side !== "" && renderBoard}
         </View>
       </View>
       <View
         style={[
           styles.playerInfo,
-          state.player === "w" && styles.currentPlayer,
+          state.player === side && side !== "" ? styles.currentPlayer : null,
         ]}
       >
         <Image
-          source={require("../assets/chess/wk.png")}
+          source={
+            side === "w"
+              ? require("../assets/chess/wk.png")
+              : require("../assets/chess/bk.png")
+          }
           style={styles.playerIcon}
         />
         <Text style={styles.playerText}>Bạn</Text>
