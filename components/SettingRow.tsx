@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Switch } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
+import { Audio } from "expo-av";
 
 type SettingRowProps = {
   icon: string;
@@ -24,16 +25,21 @@ const SettingRow = ({
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => setIsEnabled((prev) => !prev);
   const [volume, setVolume] = useState(6);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
 
-  const increaseVolume = () => {
+  const increaseVolume = async () => {
     if (volume < maxVolume) {
-      setVolume(volume + 1);
+      const newVolume = volume + 1;
+      setVolume(newVolume);
+      await sound?.setVolumeAsync(newVolume / maxVolume);
     }
   };
 
-  const decreaseVolume = () => {
+  const decreaseVolume = async () => {
     if (volume > 0) {
-      setVolume(volume - 1);
+      const newVolume = volume - 1;
+      setVolume(newVolume);
+      await sound?.setVolumeAsync(newVolume / maxVolume);
     }
   };
 

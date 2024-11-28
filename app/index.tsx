@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import {IconButton, Button} from "react-native-paper";
+import { IconButton, Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import {useRouter} from "expo-router";
-import {Colors} from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import { Colors } from "@/constants/Colors";
 
-const {width} = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export default function index() {
   const router = useRouter();
@@ -20,10 +20,7 @@ export default function index() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image
-          source={require("../assets/chess/bb.png")}
-          style={styles.logo}
-        />
+        <Image source={require("../assets/chess/bb.png")} style={styles.logo} />
         <Text style={styles.title}>CHECKMATE!</Text>
         <Text style={styles.subtitle}>Trải nghiệm cờ vua đỉnh cao</Text>
       </View>
@@ -31,15 +28,12 @@ export default function index() {
       <View>
         <Image
           source={require("../assets/images/home_image.png")}
-          style={{width: "100%", height: 200}}
+          style={{ width: "100%", height: 200 }}
         />
       </View>
 
       <View style={styles.buttonContainer}>
-        <GameButton
-          icon="web"
-          text="Chơi Trực tuyến"
-        />
+        <GameButton icon="web" text="Chơi Trực tuyến" />
         <GameButton
           icon="robot"
           text="Chơi với Máy tính"
@@ -47,10 +41,7 @@ export default function index() {
             router.push("/play-with-bot");
           }}
         />
-        <GameButton
-          icon="account-group"
-          text="Chơi với bạn bè"
-        />
+        <GameButton icon="account-group" text="Chơi với bạn bè" />
         <GameButton
           icon="cog"
           text="Cài đặt"
@@ -63,7 +54,6 @@ export default function index() {
   );
 }
 
-// Component cho nút
 const GameButton = ({
   icon,
   text,
@@ -73,15 +63,8 @@ const GameButton = ({
   text: string;
   onPress?: () => void;
 }) => (
-  <TouchableOpacity
-    style={styles.button}
-    onPress={onPress}
-  >
-    <Icon
-      name={icon}
-      size={24}
-      color={Colors.DARKBLUE}
-    />
+  <TouchableOpacity style={styles.button} onPress={onPress}>
+    <Icon name={icon} size={24} color={Colors.DARKBLUE} />
     <Text style={styles.buttonText}>{text}</Text>
   </TouchableOpacity>
 );
