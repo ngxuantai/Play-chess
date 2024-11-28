@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
-import React from "react";
-import { Colors } from "@/constants/Colors";
+import React, { useState, useEffect } from "react";
+import { Colors, backgroundTheme } from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface RowProps {
   row: number;
@@ -11,9 +12,30 @@ interface SquareProps extends RowProps {
   col: number;
 }
 
+const THEME_KEY = "user_theme";
+
 const Square = ({ row, col, flip }: SquareProps) => {
-  const backgroundColor = (row + col) % 2 === 0 ? Colors.WHITE : Colors.GREEN;
-  const color = (row + col) % 2 === 0 ? Colors.BLACK : Colors.WHITE;
+  const [theme, setTheme] = useState([
+    backgroundTheme[0].colors[0],
+    backgroundTheme[0].colors[1],
+  ]); // default theme
+
+  useEffect(() => {
+    const fetchTheme = async () => {
+      try {
+        const storedTheme = await AsyncStorage.getItem(THEME_KEY);
+        if (storedTheme) {
+          setTheme(JSON.parse(storedTheme));
+        }
+      } catch (error) {
+        console.error("Failed to fetch theme", error);
+      }
+    };
+    fetchTheme();
+  }, []);
+
+  const backgroundColor = (row + col) % 2 === 0 ? theme[0] : theme[1];
+  const color = (row + col) % 2 === 0 ? Colors.WHITE : Colors.BLACK;
   return (
     <View
       style={{
@@ -52,12 +74,7 @@ const Row = ({ row, flip }: RowProps) => {
   return (
     <View style={{ flex: 1, flexDirection: "row" }}>
       {new Array(8).fill(null).map((_, col) => (
-        <Square
-          key={col}
-          row={row}
-          col={flip ? 7 - col : col}
-          flip={flip}
-        />
+        <Square key={col} row={row} col={flip ? 7 - col : col} flip={flip} />
       ))}
     </View>
   );
