@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Stack } from "expo-router";
 import BackgroundMusic from "@/components/BackgroundMusic";
+import { SoundProvider } from "@/context/SoundContext";
 
 export default function RootLayout() {
   const [currentRoute, setCurrentRoute] = useState<string | null>(null);
 
   return (
-    <>
+    <SoundProvider>
       <BackgroundMusic currentRoute={currentRoute} />
       <Stack
         screenListeners={{
@@ -24,6 +25,6 @@ export default function RootLayout() {
         />
         <Stack.Screen name="settings" options={{ title: "Cài đặt" }} />
       </Stack>
-    </>
+    </SoundProvider>
   );
 }

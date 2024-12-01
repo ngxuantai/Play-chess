@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Audio } from "expo-av";
+import { useSound } from "@/context/SoundContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface BackgroundMusicProps {
-  currentRoute: string | null;
-}
-
-const BackgroundMusic: React.FC<BackgroundMusicProps> = ({ currentRoute }) => {
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const loadSound = async () => {
-    const { sound } = await Audio.Sound.createAsync(
-      require("../assets/music/background-music.mp3")
-    );
-    setSound(sound);
-    await sound.setIsLoopingAsync(true);
-    console.log("Music loaded");
-  };
+const BackgroundMusic: React.FC<{ currentRoute: string | null }> = ({
+  currentRoute,
+}) => {
+  const { sound, isPlaying, setIsPlaying } = useSound();
 
   useEffect(() => {
-    loadSound();
-    return () => {
-      sound?.unloadAsync();
+    const loadMusicState = async () => {
+      if (!sound) return;
+      try {
+        const storedValue = await AsyncStorage.getItem("music_enabled");
+        if (storedValue !== null) {
+          setIsPlaying(JSON.parse(storedValue));
+          if (isPlaying) {
+            await sound.playAsync();
+          }
+        }
+      } catch (error) {
+        console.error("Error loading music_enabled:", error);
+      }
     };
-  }, []);
+    loadMusicState();
+  }, [sound, isPlaying, setIsPlaying]);
 
   useEffect(() => {
     const manageMusic = async () => {
@@ -34,16 +34,11 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({ currentRoute }) => {
           await sound.pauseAsync();
           setIsPlaying(false);
         }
-      } else {
-        if (!isPlaying) {
-          await sound.playAsync();
-          setIsPlaying(true);
-        }
       }
     };
 
     manageMusic();
-  }, [currentRoute, sound]);
+  }, [currentRoute, sound, isPlaying, setIsPlaying]);
 
   return null;
 };
