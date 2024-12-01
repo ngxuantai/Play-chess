@@ -36,13 +36,6 @@ export default function Settings() {
     }
   };
 
-  console.log("isPlaying", isPlaying);
-
-  AsyncStorage.getItem("music_enabled").then((value) => console.log(value));
-  AsyncStorage.getItem("music_enabled_volume").then((value) =>
-    console.log(value)
-  );
-
   return (
     <GestureHandlerRootView>
       <ScrollView>
