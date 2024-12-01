@@ -13,8 +13,36 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Colors } from "@/constants/Colors";
 import { Divider } from "react-native-paper";
 import BackgroundSetting from "@/components/BackgroundSetting";
+import { useSound } from "@/context/SoundContext";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Settings() {
+  const { sound, isPlaying, setIsPlaying } = useSound();
+
+  const handleMusicToggle = async () => {
+    if (sound) {
+      try {
+        if (isPlaying) {
+          await sound.pauseAsync();
+          setIsPlaying(false);
+        } else {
+          await sound.playAsync();
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.error("Error in handleMusicToggle:", error);
+      }
+    }
+  };
+
+  console.log("isPlaying", isPlaying);
+
+  AsyncStorage.getItem("music_enabled").then((value) => console.log(value));
+  AsyncStorage.getItem("music_enabled_volume").then((value) =>
+    console.log(value)
+  );
+
   return (
     <GestureHandlerRootView>
       <ScrollView>
@@ -32,7 +60,15 @@ export default function Settings() {
             text="Chỉ có âm thanh khi di chuyển"
             isToggle
           />
-          <SettingRow icon="music" text="Âm nhạc" isToggle isVolume />
+          <SettingRow
+            icon="music"
+            text="Âm nhạc"
+            isToggle
+            isVolume
+            storageKey="music_enabled"
+            initialEnabled={isPlaying}
+            onToggle={handleMusicToggle}
+          />
           <SettingRow
             icon="file-music"
             text="Âm nhạc trong trò chơi"
