@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Audio } from "expo-av";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type SoundContextType = {
   sound: Audio.Sound | null;
@@ -31,6 +30,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({
           require("../assets/music/background-music.mp3")
         );
         setSound(newSound);
+        await newSound.setIsLoopingAsync(true);
       } catch (error) {
         console.error("Failed to load sound:", error);
       }

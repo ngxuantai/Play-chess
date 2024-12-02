@@ -18,12 +18,22 @@ export default function RootLayout() {
           },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="index"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="play-online"
+          options={{ title: "Chơi trực tuyến" }}
+        />
         <Stack.Screen
           name="play-with-bot"
           options={{ title: "Chơi với máy" }}
         />
-        <Stack.Screen name="settings" options={{ title: "Cài đặt" }} />
+        <Stack.Screen
+          name="settings"
+          options={{ title: "Cài đặt" }}
+        />
       </Stack>
     </SoundProvider>
   );
