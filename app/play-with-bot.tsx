@@ -6,8 +6,13 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigation } from "expo-router";
+import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
+import { selectIsLoading } from "@/redux/selectors/loadingSelector";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import GlobalLoading from "@/components/GlobalLoading";
 import SidePickerModal from "@/components/SidePickerModal";
 import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
@@ -19,18 +24,69 @@ import { SIZE } from "@/utils/chessUtils";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 import { getBestMove } from "@/utils/chessBot";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
 export default function PlayWithBot() {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  const isLoading = useSelector(selectIsLoading);
   const chess = useConst(() => new Chess());
+  const [isSidePickerVisible, setSidePickerVisible] = useState(true);
   const [side, setSide] = useState<string>("");
   const [state, setState] = useState({
     player: "w",
-    board: chess.board(),
+    board: [],
   });
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
-  const [isDialogVisible, setDialogVisible] = useState(false);
+  const [isResetDialogVisible, setResetDialogVisible] = useState(false);
+
+  useEffect(() => {
+    const getGameState = async () => {
+      try {
+        dispatch(startLoading("Đang tải bàn cờ cũ"));
+
+        const gameState = await AsyncStorage.getItem("gameState");
+        if (gameState) {
+          const { board, history, side } = JSON.parse(gameState);
+          chess.load(board);
+          setSide(side);
+          setState({
+            player: chess.turn(),
+            board: chess.board(),
+          });
+          setSidePickerVisible(false);
+          setMoveHistory(history);
+        }
+
+        dispatch(stopLoading());
+      } catch (error) {
+        dispatch(stopLoading());
+      }
+    };
+
+    getGameState();
+  }, []);
+
+  const saveGameState = useCallback(async () => {
+    try {
+      const gameState = {
+        board: chess.fen(),
+        history: chess.history({ verbose: true }),
+        side,
+      };
+      await AsyncStorage.setItem("gameState", JSON.stringify(gameState));
+    } catch (error) {
+      console.error("Failed to save game state:", error);
+    }
+  }, [chess, side]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", saveGameState); // optimize: directly pass saveGameState
+    return unsubscribe;
+  }, [navigation, saveGameState]);
 
   const onTurn = useCallback(
     (move: Move) => {
@@ -46,7 +102,7 @@ export default function PlayWithBot() {
   );
 
   // const makeBotMove = useCallback(() => {
-  //   const bestMove = getBestMove(chess, 3, false);
+  //   const bestMove = getBestMove(chess, 3, side === "w" ? false : true);
   //   const movelog = chess.move(bestMove);
   //   setMoveHistory((prev) => [...prev, movelog]);
   //   setState({
@@ -56,10 +112,10 @@ export default function PlayWithBot() {
   // }, [chess]);
 
   // useEffect(() => {
-  // if (state.player === "b") {
-  //   makeBotMove();
-  // }
-  // }, [state.player, makeBotMove]);
+  //   if (state.player !== side && side !== "") {
+  //     makeBotMove();
+  //   }
+  // }, [state.board, makeBotMove, side]);
 
   const resetBoard = () => {
     chess.reset();
@@ -68,10 +124,11 @@ export default function PlayWithBot() {
       board: chess.board(),
     });
     setMoveHistory([]);
-    setDialogVisible(false);
+    setResetDialogVisible(false);
   };
 
   const renderBoard = useMemo(() => {
+    if (state.board.length === 0) return null;
     return state.board.map((row, rowIndex) =>
       row.map((square, colIndex) => {
         if (square === null) return null;
@@ -86,16 +143,26 @@ export default function PlayWithBot() {
             chess={chess}
             flip={side !== "" && side === "b"}
             onTurn={onTurn}
-            enabled={state.player === side && side !== ""}
+            enabled={chess.turn() === side && side === square.color}
           />
         );
       })
     );
   }, [state.board, side, chess, state.player]);
 
+  if (isLoading)
+    return (
+      <View style={styles.container}>
+        <GlobalLoading />
+      </View>
+    );
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SidePickerModal onSelectSide={setSide} />
+      <SidePickerModal
+        visible={isSidePickerVisible}
+        onSelectSide={setSide}
+      />
       <View style={styles.status}>
         <View style={styles.statusBar}>
           {moveHistory.length === 0 ? (
@@ -108,7 +175,7 @@ export default function PlayWithBot() {
         </View>
         <TouchableOpacity
           style={styles.refreshButton}
-          onPress={() => setDialogVisible(true)}
+          onPress={() => setResetDialogVisible(true)}
         >
           <Icon
             name="refresh"
@@ -117,10 +184,10 @@ export default function PlayWithBot() {
           />
         </TouchableOpacity>
         <ConfirmationDialog
-          visible={isDialogVisible}
+          visible={isResetDialogVisible}
           text="Bắt đầu bàn cờ mới?"
           onConfirm={resetBoard}
-          onCancel={() => setDialogVisible(false)}
+          onCancel={() => setResetDialogVisible(false)}
         />
       </View>
       <View

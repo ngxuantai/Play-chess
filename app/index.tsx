@@ -20,7 +20,10 @@ export default function index() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require("../assets/chess/bb.png")} style={styles.logo} />
+        <Image
+          source={require("../assets/chess/bb.png")}
+          style={styles.logo}
+        />
         <Text style={styles.title}>CHECKMATE!</Text>
         <Text style={styles.subtitle}>Trải nghiệm cờ vua đỉnh cao</Text>
       </View>
@@ -33,7 +36,10 @@ export default function index() {
       </View>
 
       <View style={styles.buttonContainer}>
-        <GameButton icon="web" text="Chơi Trực tuyến" />
+        <GameButton
+          icon="web"
+          text="Chơi Trực tuyến"
+        />
         <GameButton
           icon="robot"
           text="Chơi với Máy tính"
@@ -41,7 +47,10 @@ export default function index() {
             router.push("/play-with-bot");
           }}
         />
-        <GameButton icon="account-group" text="Chơi với bạn bè" />
+        <GameButton
+          icon="account-group"
+          text="Chơi với bạn bè"
+        />
         <GameButton
           icon="cog"
           text="Cài đặt"
@@ -63,8 +72,15 @@ const GameButton = ({
   text: string;
   onPress?: () => void;
 }) => (
-  <TouchableOpacity style={styles.button} onPress={onPress}>
-    <Icon name={icon} size={24} color={Colors.DARKBLUE} />
+  <TouchableOpacity
+    style={styles.button}
+    onPress={onPress}
+  >
+    <Icon
+      name={icon}
+      size={24}
+      color={Colors.DARKBLUE}
+    />
     <Text style={styles.buttonText}>{text}</Text>
   </TouchableOpacity>
 );
