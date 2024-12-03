@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
 import { store } from "@/redux/store";
 import BackgroundMusic from "@/components/BackgroundMusic";
-import { SoundProvider } from "@/context/SoundContext";
 
 export default function RootLayout() {
   const [currentRoute, setCurrentRoute] = useState<string | null>(null);

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import {
   selectIsLoading,
   selectLoadingMessage,
-} from "@/redux/selectors/loadingSelector";
+} from "@/redux/selectors/loadingSelectors";
 import { Colors } from "@/constants/Colors";
 
 const GlobalLoading: React.FC = () => {

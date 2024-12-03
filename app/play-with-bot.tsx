@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "expo-router";
 import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
-import { selectIsLoading } from "@/redux/selectors/loadingSelector";
+import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GlobalLoading from "@/components/GlobalLoading";
 import SidePickerModal from "@/components/SidePickerModal";
@@ -38,37 +38,35 @@ export default function PlayWithBot() {
   const [side, setSide] = useState<string>("");
   const [state, setState] = useState({
     player: "w",
-    board: [],
+    board: [] as (Piece | null)[][],
   });
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
   const [isResetDialogVisible, setResetDialogVisible] = useState(false);
 
-  useEffect(() => {
-    const getGameState = async () => {
-      try {
-        dispatch(startLoading("Đang tải bàn cờ cũ"));
+  const loadGameState = useCallback(async () => {
+    try {
+      dispatch(startLoading("Đang tải bàn cờ cũ"));
 
-        const gameState = await AsyncStorage.getItem("gameState");
-        if (gameState) {
-          const { board, history, side } = JSON.parse(gameState);
-          chess.load(board);
-          setSide(side);
-          setState({
-            player: chess.turn(),
-            board: chess.board(),
-          });
-          setSidePickerVisible(false);
-          setMoveHistory(history);
-        }
-
-        dispatch(stopLoading());
-      } catch (error) {
-        dispatch(stopLoading());
+      const gameState = await AsyncStorage.getItem("gameState");
+      if (gameState) {
+        const { board, history, side: savedSide } = JSON.parse(gameState);
+        chess.load(board);
+        setSide(savedSide);
+        setState({
+          player: chess.turn(),
+          board: chess.board(),
+        });
+        setMoveHistory(history);
+        setSidePickerVisible(false);
+      } else {
+        resetBoard(false);
       }
-    };
-
-    getGameState();
-  }, []);
+    } catch (error) {
+      console.error("Failed to load game state:", error);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }, [chess, dispatch]);
 
   const saveGameState = useCallback(async () => {
     try {
@@ -83,8 +81,35 @@ export default function PlayWithBot() {
     }
   }, [chess, side]);
 
+  const resetBoard = useCallback(
+    (isInitial = true) => {
+      chess.reset();
+      setState({
+        player: "w",
+        board: chess.board(),
+      });
+      setMoveHistory([]);
+      setSide("");
+      setSidePickerVisible(true);
+      if (isInitial) {
+        AsyncStorage.removeItem("gameState").catch((error) =>
+          console.error("Failed to delete game state", error)
+        );
+      }
+    },
+    [chess]
+  );
+
   useEffect(() => {
-    const unsubscribe = navigation.addListener("beforeRemove", saveGameState); // optimize: directly pass saveGameState
+    loadGameState();
+  }, [loadGameState]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
+      if (moveHistory.length > 0 && side !== "") {
+        saveGameState();
+      }
+    });
     return unsubscribe;
   }, [navigation, saveGameState]);
 
@@ -116,16 +141,6 @@ export default function PlayWithBot() {
   //     makeBotMove();
   //   }
   // }, [state.board, makeBotMove, side]);
-
-  const resetBoard = () => {
-    chess.reset();
-    setState({
-      player: "w",
-      board: chess.board(),
-    });
-    setMoveHistory([]);
-    setResetDialogVisible(false);
-  };
 
   const renderBoard = useMemo(() => {
     if (state.board.length === 0) return null;
@@ -161,7 +176,10 @@ export default function PlayWithBot() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SidePickerModal
         visible={isSidePickerVisible}
-        onSelectSide={setSide}
+        onSelectSide={(selectedSide) => {
+          setSide(selectedSide);
+          setSidePickerVisible(false);
+        }}
       />
       <View style={styles.status}>
         <View style={styles.statusBar}>
@@ -186,7 +204,10 @@ export default function PlayWithBot() {
         <ConfirmationDialog
           visible={isResetDialogVisible}
           text="Bắt đầu bàn cờ mới?"
-          onConfirm={resetBoard}
+          onConfirm={() => {
+            resetBoard();
+            setResetDialogVisible(false);
+          }}
           onCancel={() => setResetDialogVisible(false)}
         />
       </View>

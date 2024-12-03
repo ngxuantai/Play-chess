@@ -1,39 +1,22 @@
 import SettingRow from "@/components/SettingRow";
 import UserProfile from "@/components/UserProfile";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Switch,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, Switch, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Colors } from "@/constants/Colors";
 import { Divider } from "react-native-paper";
 import BackgroundSetting from "@/components/BackgroundSetting";
-import { useSound } from "@/context/SoundContext";
-import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch, useSelector } from "react-redux";
+import { setSetting } from "@/redux/slices/settingsSlice";
+import { selectSettingsState } from "@/redux/selectors/settingsSelectors";
 
 export default function Settings() {
-  const { sound, isPlaying, setIsPlaying } = useSound();
+  const dispatch = useDispatch();
+  const settings = useSelector(selectSettingsState);
 
-  const handleMusicToggle = async () => {
-    if (sound) {
-      try {
-        if (isPlaying) {
-          await sound.pauseAsync();
-          setIsPlaying(false);
-        } else {
-          await sound.playAsync();
-          setIsPlaying(true);
-        }
-      } catch (error) {
-        console.error("Error in handleMusicToggle:", error);
-      }
-    }
+  const handleToggle = async (key: string) => {
+    const currentValue = settings[key];
+    dispatch(setSetting({ key, value: !currentValue }));
   };
 
   return (
@@ -42,37 +25,32 @@ export default function Settings() {
         <View style={styles.container}>
           <Text style={styles.titleText}>Chung</Text>
           <Divider style={styles.divider} />
-          <SettingRow
-            icon="circle-half-full"
-            text="Chủ đề"
-            subtitle="Mặc định hệ thống"
-          />
-          <SettingRow icon="music-note" text="Âm thanh" isToggle />
-          <SettingRow
+          {/* <SettingRow
+            icon="music-note"
+            text="Âm thanh"
+          /> */}
+          {/* <SettingRow
             icon="account-music"
             text="Chỉ có âm thanh khi di chuyển"
-            isToggle
-          />
+          /> */}
           <SettingRow
             icon="music"
             text="Âm nhạc"
-            isToggle
-            isVolume
-            storageKey="music_enabled"
-            initialEnabled={isPlaying}
-            onToggle={handleMusicToggle}
+            state={settings.isAppSoundPlaying}
+            onToggle={() => handleToggle("isAppSoundPlaying")}
           />
-          <SettingRow
+          {/* <SettingRow
             icon="file-music"
             text="Âm nhạc trong trò chơi"
-            isToggle
           />
           <SettingRow
             icon="music-box"
             text="Âm nhạc trong các câu đố"
-            isToggle
-          />
-          <SettingRow icon="vibrate" text="Rung" isToggle />
+          /> */}
+          {/* <SettingRow
+            icon="vibrate"
+            text="Rung"
+          /> */}
         </View>
 
         <View style={styles.container}>
@@ -84,38 +62,38 @@ export default function Settings() {
         <View style={styles.container}>
           <Text style={styles.titleText}>Tùy chọn trò chơi</Text>
           <Divider style={styles.divider} />
-          <SettingRow
+          {/* <SettingRow
             icon="square-circle"
             text="Hiển thị nước đi hợp pháp"
-            isToggle
-          />
-          <SettingRow
+          /> */}
+          {/* <SettingRow
             icon="square-edit-outline"
             text="Làm nổi bật nước đi cuối cùng"
-            isToggle
+          /> */}
+          {/* <SettingRow
+            icon="map-marker"
+            text="Hiển thị tọa độ"
           />
-          <SettingRow icon="map-marker" text="Hiển thị tọa độ" isToggle />
-          <SettingRow icon="crop-square" text="Chỉ báo kiểm tra vua" isToggle />
           <SettingRow
+            icon="crop-square"
+            text="Chỉ báo kiểm tra vua"
+          /> */}
+          {/* <SettingRow
             icon="dots-circle"
             text="Nước đi đang chờ xử lý"
-            isToggle
-          />
-          <SettingRow
+          /> */}
+          {/* <SettingRow
             icon="chess-queen"
             text="Luôn thăng cấp lên nữ hoàng"
-            isToggle
-          />
-          <SettingRow
+          /> */}
+          {/* <SettingRow
             icon="book-open-outline"
             text="Hiển thị tên mở"
-            isToggle
-          />
-          <SettingRow
+          /> */}
+          {/* <SettingRow
             icon="chat-processing-outline"
             text="Cho phép trò chuyện"
-            isToggle
-          />
+          /> */}
         </View>
 
         <View style={styles.container}>
