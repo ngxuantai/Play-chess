@@ -12,12 +12,15 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 
 interface SidePickerModalProps {
+  visible: boolean;
   onSelectSide: (side: string) => void;
 }
 
-const SidePickerModal: React.FC<SidePickerModalProps> = ({ onSelectSide }) => {
+const SidePickerModal = ({
+  visible = true,
+  onSelectSide,
+}: SidePickerModalProps) => {
   const router = useRouter();
-  const [visible, setVisible] = useState<boolean>(true);
   const [side, setSide] = useState<string>("w");
 
   const onClose = () => {
@@ -31,7 +34,6 @@ const SidePickerModal: React.FC<SidePickerModalProps> = ({ onSelectSide }) => {
     } else {
       onSelectSide(side);
     }
-    setVisible(false);
   };
 
   return (

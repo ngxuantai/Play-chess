@@ -1,10 +1,9 @@
 import { View, Text, Image } from "react-native";
-import React, { useState, useEffect } from "react";
-import { Colors, backgroundTheme } from "@/constants/Colors";
+import React, { useState } from "react";
 import { Chess } from "chess.js";
 import ColorThemeModal from "./ColorThemeModal";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useSelector } from "react-redux";
+import { selectTheme } from "@/redux/selectors/settingsSelectors";
 interface RowProps {
   row: number;
 }
@@ -61,7 +60,6 @@ const initializeBoard = () => {
 
 const Square = ({ row, col, piece, theme }: SquareProps) => {
   const backgroundColor = (row + col) % 2 === 0 ? theme[0] : theme[1];
-  //const color = (row + col) % 2 === 0 ? Colors.BLACK : Colors.WHITE;
 
   return (
     <View
@@ -94,7 +92,13 @@ const Row = ({
   return (
     <View style={{ flex: 1, flexDirection: "row" }}>
       {board[row].map((piece: string | null, col: number) => (
-        <Square key={col} row={row} col={col} piece={piece} theme={theme} />
+        <Square
+          key={col}
+          row={row}
+          col={col}
+          piece={piece}
+          theme={theme}
+        />
       ))}
     </View>
   );
@@ -104,46 +108,20 @@ const THEME_KEY = "user_theme";
 
 const BackgroundSetting = () => {
   const [board, setBoard] = useState(initializeBoard());
-  const [theme, setTheme] = useState([
-    backgroundTheme[0].colors[0],
-    backgroundTheme[0].colors[1],
-  ]); // default theme
-
-  useEffect(() => {
-    const fetchTheme = async () => {
-      try {
-        const storedTheme = await AsyncStorage.getItem(THEME_KEY);
-        if (storedTheme) {
-          setTheme(JSON.parse(storedTheme));
-        }
-      } catch (error) {
-        console.error("Failed to fetch theme", error);
-      }
-    };
-    fetchTheme();
-  }, []);
-
-  const handleSelectTheme = async (selectedTheme: string[]) => {
-    try {
-      await AsyncStorage.setItem(THEME_KEY, JSON.stringify(selectedTheme));
-      setTheme(selectedTheme);
-    } catch (error) {
-      console.error("Failed to save theme", error);
-    }
-  };
-
-  // useEffect(() => {
-  //   AsyncStorage.getAllKeys().then((keys) => console.log(keys));
-  //   AsyncStorage.getItem(THEME_KEY).then((theme) => console.log(theme));
-  // }, [theme]);
+  const theme = useSelector(selectTheme);
 
   return (
     <View>
-      <ColorThemeModal onSelectTheme={handleSelectTheme} />
+      <ColorThemeModal />
 
       <View style={{ flex: 1, aspectRatio: 1, alignSelf: "center" }}>
         {board.map((_, row) => (
-          <Row key={row} row={row} board={board} theme={theme} />
+          <Row
+            key={row}
+            row={row}
+            board={board}
+            theme={theme}
+          />
         ))}
       </View>
     </View>

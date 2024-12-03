@@ -1,44 +1,56 @@
 import React, { useEffect, useState } from "react";
-import { useSound } from "@/context/SoundContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSelector } from "react-redux";
+import { selectIsAppSoundPlaying } from "@/redux/selectors/settingsSelectors";
+import { Audio } from "expo-av";
 
 const BackgroundMusic: React.FC<{ currentRoute: string | null }> = ({
   currentRoute,
 }) => {
-  const { sound, isPlaying, setIsPlaying } = useSound();
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const isAppSoundPlaying = useSelector(selectIsAppSoundPlaying);
 
   useEffect(() => {
-    const loadMusicState = async () => {
-      if (!sound) return;
+    let isMounted = true;
+    const loadSound = async () => {
       try {
-        const storedValue = await AsyncStorage.getItem("music_enabled");
-        if (storedValue !== null) {
-          setIsPlaying(JSON.parse(storedValue));
-          if (isPlaying) {
-            await sound.playAsync();
-          }
-        }
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          require("../assets/music/background-music.mp3")
+        );
+        if (isMounted) setSound(newSound);
       } catch (error) {
-        console.error("Error loading music_enabled:", error);
+        console.error("Failed to load sound:", error);
       }
     };
-    loadMusicState();
-  }, [sound, isPlaying, setIsPlaying]);
+
+    loadSound();
+
+    return () => {
+      isMounted = false;
+      sound?.unloadAsync();
+    };
+  }, []);
 
   useEffect(() => {
-    const manageMusic = async () => {
-      if (!sound) return;
+    if (!sound) return;
 
-      if (currentRoute === "play-with-bot") {
-        if (isPlaying) {
+    const manageMusic = async () => {
+      try {
+        if (currentRoute === "play-with-bot") {
           await sound.pauseAsync();
-          setIsPlaying(false);
+        } else if (isAppSoundPlaying) {
+          await sound.playAsync();
+          await sound.setIsLoopingAsync(true);
+          await sound.setVolumeAsync(0.5);
+        } else {
+          await sound.pauseAsync();
         }
+      } catch (error) {
+        console.error("Error managing music:", error);
       }
     };
 
     manageMusic();
-  }, [currentRoute, sound, isPlaying, setIsPlaying]);
+  }, [sound, currentRoute, isAppSoundPlaying]);
 
   return null;
 };

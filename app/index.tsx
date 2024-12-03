@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -10,12 +10,34 @@ import {
 import { IconButton, Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
+import { useDispatch } from "react-redux";
+import { setSetting } from "@/redux/slices/settingsSlice";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 
 const { width } = Dimensions.get("window");
 
 export default function index() {
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await AsyncStorage.getItem("settings");
+        let parsedSettings;
+        if (settings !== null) {
+          parsedSettings = JSON.parse(settings);
+          Object.entries(parsedSettings).forEach(([key, value]) => {
+            dispatch(setSetting({ key, value }));
+          });
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    };
+    loadSettings();
+  }, []);
 
   return (
     <View style={styles.container}>

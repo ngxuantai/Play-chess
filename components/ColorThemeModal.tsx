@@ -11,15 +11,13 @@ import {
 } from "react-native";
 import { backgroundTheme, Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch, useSelector } from "react-redux";
+import { setSetting } from "@/redux/slices/settingsSlice";
+import { selectTheme } from "@/redux/selectors/settingsSelectors";
 
-interface ColorThemeModalProps {
-  onSelectTheme: (theme: string[]) => void;
-}
-
-const THEME_KEY = "user_theme";
-
-const ColorThemeModal = ({ onSelectTheme }: ColorThemeModalProps) => {
+const ColorThemeModal = () => {
+  const dispatch = useDispatch();
+  const theme = useSelector(selectTheme);
   const [visible, setVisible] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<string>(
     backgroundTheme[0].name
@@ -33,30 +31,14 @@ const ColorThemeModal = ({ onSelectTheme }: ColorThemeModalProps) => {
   };
 
   useEffect(() => {
-    const fetchTheme = async () => {
-      try {
-        const storedTheme = await AsyncStorage.getItem(THEME_KEY);
-        if (storedTheme) {
-          const theme = JSON.parse(storedTheme);
-          const themeName = getThemeNameByColors(theme);
-          setSelectedTheme(themeName);
-        }
-      } catch (error) {
-        console.error("Failed to fetch theme", error);
-      }
-    };
-    fetchTheme();
-  }, []);
+    const themeName = getThemeNameByColors(theme);
+    setSelectedTheme(themeName);
+  }, [theme]);
 
-  const handleSelect = async (colors: string[], name: string) => {
-    try {
-      await AsyncStorage.setItem(THEME_KEY, JSON.stringify(colors));
-      onSelectTheme(colors);
-      setSelectedTheme(name);
-      setVisible(false);
-    } catch (error) {
-      console.error("Failed to save theme", error);
-    }
+  const handleSelect = (colors: string[], name: string) => {
+    dispatch(setSetting({ key: "theme", value: colors }));
+    setSelectedTheme(name);
+    setVisible(false);
   };
 
   return (
@@ -74,14 +56,24 @@ const ColorThemeModal = ({ onSelectTheme }: ColorThemeModalProps) => {
           onPress={() => setVisible(true)}
           style={styles.inputContainer}
         >
-          <TextInput editable={false} style={{ ...styles.themeName }}>
+          <TextInput
+            editable={false}
+            style={{ ...styles.themeName }}
+          >
             {selectedTheme}
           </TextInput>
-          <Icon name="chevron-down" size={20} />
+          <Icon
+            name="chevron-down"
+            size={20}
+          />
         </TouchableOpacity>
       </View>
 
-      <Modal visible={visible} animationType="slide" transparent={true}>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+      >
         <TouchableWithoutFeedback onPress={() => setVisible(false)}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
