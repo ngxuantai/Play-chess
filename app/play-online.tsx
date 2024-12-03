@@ -100,7 +100,7 @@ export default function PlayOnline() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SidePickerModal onSelectSide={setSide} />
+      {/* <SidePickerModal onSelectSide={setSide} /> */}
       <TimePickerModal onTimeSelect={handleTimeSelection} />
       <View style={styles.status}>
         <View style={styles.statusBar}>
