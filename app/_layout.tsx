@@ -24,6 +24,10 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="play-online"
+          options={{ title: "Chơi trực tuyến" }}
+        />
+        <Stack.Screen
           name="play-with-bot"
           options={{ title: "Chơi với máy" }}
         />
