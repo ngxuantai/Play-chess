@@ -73,6 +73,9 @@ export default function index() {
         <GameButton
           icon="account-group"
           text="Chơi với bạn bè"
+          onPress={() => {
+            router.push("/welcome");
+          }}
         />
         <GameButton
           icon="cog"
