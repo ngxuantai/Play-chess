@@ -54,15 +54,8 @@ export default function Login() {
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity>
-        <LinearGradient
-          colors={[Colors.DARKBLUE, Colors.LIGHTBLUE]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>Log in</Text>
-        </LinearGradient>
+      <TouchableOpacity style={styles.button}>
+        <Text style={styles.buttonText}>Log in</Text>
       </TouchableOpacity>
       <Text style={{ marginTop: 10 }}>Lost password?</Text>
       <View style={styles.otherOptionsContainer}>
@@ -108,7 +101,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   image: { width: 150, height: 150 },
-  title: { fontSize: 24, opacity: 0.5 },
+  title: { fontSize: 24 },
   inputContainer: {
     marginTop: 70,
     justifyContent: "center",
@@ -122,6 +115,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: "80%",
     borderRadius: 20,
+    color: Colors.DARKBLUE,
   },
   passwordContainer: {
     flexDirection: "row",
@@ -138,8 +132,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
     borderRadius: 20,
     alignItems: "center",
+    backgroundColor: Colors.LIGHTBLUE,
   },
-  buttonText: { color: "#fff", fontWeight: "bold" },
+  buttonText: { color: Colors.DARKBLUE, fontWeight: "bold" },
   otherOptionsContainer: {
     display: "flex",
     flexDirection: "row",

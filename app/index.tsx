@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { setSetting } from "@/redux/slices/settingsSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
@@ -40,10 +41,13 @@ export default function index() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[Colors.LIGHTBLUE, Colors.DARKBLUE]}
+      style={styles.container}
+    >
       <View style={styles.logoContainer}>
         <Image
-          source={require("../assets/chess/bb.png")}
+          source={require("../assets/images/welcome-image.png")}
           style={styles.logo}
         />
         <Text style={styles.title}>CHECKMATE!</Text>
@@ -52,7 +56,7 @@ export default function index() {
 
       <View>
         <Image
-          source={require("../assets/images/home_image.png")}
+          source={require("../assets/images/home-image.png")}
           style={{ width: "100%", height: 200 }}
         />
       </View>
@@ -74,7 +78,7 @@ export default function index() {
           icon="account-group"
           text="Chơi với bạn bè"
           onPress={() => {
-            router.push("/welcome");
+            router.push("/login");
           }}
         />
         <GameButton
@@ -85,7 +89,7 @@ export default function index() {
           }}
         />
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -123,8 +127,8 @@ const styles = StyleSheet.create({
     marginVertical: 30,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     marginBottom: 20,
   },
   title: {
@@ -134,7 +138,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.GREY,
+    color: "#fff",
   },
   buttonContainer: {
     flexDirection: "row",
