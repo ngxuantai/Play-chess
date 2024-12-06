@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import { IconButton, Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
@@ -127,18 +126,18 @@ const styles = StyleSheet.create({
     marginVertical: 30,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: 160,
+    height: 160,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: "bold",
     color: Colors.BLACK,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#fff",
+    fontSize: 18,
+    color: Colors.BLACK,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -151,15 +150,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: Colors.LIGHTBLUE,
     padding: 10,
+    paddingInline: 20,
     borderRadius: 12,
     marginVertical: 10,
     width: "48%",
-    height: width / 5,
+    height: width / 6,
+    elevation: 10,
   },
   buttonText: {
     fontSize: 14,
-    color: Colors.DARKBLUE,
+    color: Colors.BLACK,
     marginLeft: 10,
     fontWeight: "bold",
+    width: "80%",
+    flexWrap: "wrap",
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,88 +6,195 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  ScrollView,
 } from "react-native";
-import { Divider } from "react-native-paper";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/redux/store";
+import { registerAction } from "@/redux/actions/authActions";
+import { selectAuth } from "@/redux/selectors/authSelectors";
 import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
+import { Divider } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
+const signUpValidationSchema = Yup.object().shape({
+  username: Yup.string().required("Không được để trống"),
+  email: Yup.string()
+    .email("Email không hợp lệ")
+    .required("Không được để trống"),
+  password: Yup.string()
+    // .matches(/\w*[a-z]\w*/, "Password must have a small letter")
+    // .matches(/\w*[A-Z]\w*/, "Password must have a capital letter")
+    // .matches(/\d/, "Password must have a number")
+    // .matches(
+    //   /[!@#$%^&*()\-_"=+{}; :,<.>]/,
+    //   "Password must have a special character"
+    // )
+    .min(8, ({ min }) => `Mật khẩu phải có ít nhất ${min} ký tự`)
+    .required("Không được để trống"),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("password")], "Mật khẩu không khớp")
+    .required("Không được để trống"),
+});
+
 export default function Register() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error, isAuthenticated } = useSelector(selectAuth);
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleRegister = () => {
-    if (password === confirmPassword) {
-      console.log("Registering with email:", email);
-    } else {
-      console.log("Passwords do not match.");
-    }
+  useEffect(() => {
+    dispatch({ type: "auth/clearError" });
+  }, [dispatch]);
+
+  const handleRegister = (values: {
+    username: string;
+    email: string;
+    password: string;
+  }) => {
+    dispatch(
+      registerAction({
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      })
+    );
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Image
         source={require("../assets/images/welcome-image.png")}
         style={styles.image}
       />
-      <Text style={styles.title}>REGISTER</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity
-            style={styles.eyeIcon}
-            onPress={() => setShowPassword(!showPassword)}
-          >
-            <Icon
-              name={showPassword ? "eye-off" : "eye"}
-              size={24}
-              color={Colors.DARKBLUE}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={[styles.input, { paddingRight: 40 }]} // Adjust padding for icon
-            placeholder="Confirm Password"
-            secureTextEntry={!showConfirmPassword}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-          <TouchableOpacity
-            style={styles.eyeIcon}
-            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
-            <Icon
-              name={showConfirmPassword ? "eye-off" : "eye"}
-              size={24}
-              color={Colors.DARKBLUE}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleRegister}
+      <Text style={styles.title}>Đăng ký</Text>
+      <Formik
+        initialValues={{
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        }}
+        validationSchema={signUpValidationSchema}
+        onSubmit={handleRegister}
       >
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
+        {({
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          values,
+          errors,
+          touched,
+        }) => (
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[
+                  styles.input,
+                  touched.username && errors.username && styles.errorInput,
+                ]}
+                placeholder="Username"
+                value={values.username}
+                onChangeText={handleChange("username")}
+                onBlur={handleBlur("username")}
+                autoCapitalize="none"
+              />
+              {touched.username && errors.username && (
+                <Text style={styles.errorText}>{errors.username}</Text>
+              )}
+            </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[
+                  styles.input,
+                  touched.email && errors.email && styles.errorInput,
+                ]}
+                placeholder="Email"
+                value={values.email}
+                onChangeText={handleChange("email")}
+                onBlur={handleBlur("email")}
+                autoCapitalize="none"
+              />
+              {touched.email && errors.email && (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+            </View>
+            <View style={styles.inputContainer}>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    touched.password && errors.password && styles.errorInput,
+                  ]}
+                  placeholder="Mật khẩu"
+                  secureTextEntry={!showPassword}
+                  value={values.password}
+                  onChangeText={handleChange("password")}
+                  onBlur={handleBlur("password")}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Icon
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={24}
+                    color={Colors.DARKBLUE}
+                  />
+                </TouchableOpacity>
+              </View>
+              {touched.password && errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+            </View>
+            <View style={styles.inputContainer}>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    touched.confirmPassword &&
+                      errors.confirmPassword &&
+                      styles.errorInput,
+                  ]}
+                  placeholder="Nhập lại mật khẩu"
+                  secureTextEntry={!showConfirmPassword}
+                  value={values.confirmPassword}
+                  onChangeText={handleChange("confirmPassword")}
+                  onBlur={handleBlur("confirmPassword")}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Icon
+                    name={showConfirmPassword ? "eye-off" : "eye"}
+                    size={24}
+                    color={Colors.DARKBLUE}
+                  />
+                </TouchableOpacity>
+              </View>
+              {touched.confirmPassword && errors.confirmPassword && (
+                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+              )}
+            </View>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSubmit as any}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? "Loading..." : "Đăng ký"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </Formik>
       <View style={styles.otherOptionsContainer}>
         <TouchableOpacity style={styles.outlinedButton}>
           <Icon
@@ -111,41 +218,56 @@ export default function Register() {
         style={styles.divider}
       />
       <Text style={styles.footer}>
-        Already have an account?{" "}
+        Đã có tài khoản?{" "}
         <Text
           style={styles.link}
           onPress={() => router.push("/login")}
         >
-          Login
+          Đăng nhập
         </Text>
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
   },
-  image: { width: 150, height: 150 },
-  title: { fontSize: 24 },
-  inputContainer: {
-    marginTop: 70,
+  image: { width: 160, height: 160 },
+  title: { fontSize: 32, fontWeight: "bold", color: Colors.BLACK },
+  formContainer: {
+    marginTop: 32,
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
+    gap: 16,
+  },
+  inputContainer: {
+    width: "100%",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
   },
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
     padding: 15,
-    marginBottom: 20,
     width: "80%",
     borderRadius: 20,
-    color: Colors.DARKBLUE,
+    color: Colors.BLACK,
+  },
+  errorInput: {
+    borderColor: "red",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 2,
+    alignSelf: "center",
   },
   passwordContainer: {
     flexDirection: "row",
@@ -158,18 +280,26 @@ const styles = StyleSheet.create({
     top: 15,
   },
   button: {
-    paddingVertical: 10,
-    paddingHorizontal: 60,
-    borderRadius: 20,
+    flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.LIGHTBLUE,
+    padding: 12,
+    borderRadius: 12,
+    marginVertical: 10,
+    elevation: 6,
   },
-  buttonText: { color: Colors.DARKBLUE, fontWeight: "bold" },
+  buttonText: {
+    fontSize: 14,
+    color: Colors.BLACK,
+    fontWeight: "bold",
+    width: "40%",
+    textAlign: "center",
+  },
   otherOptionsContainer: {
     display: "flex",
     flexDirection: "row",
     gap: 12,
-    padding: 50,
+    padding: 32,
   },
   outlinedButton: {
     display: "flex",
@@ -179,12 +309,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.DARKBLUE,
     padding: 10,
     borderRadius: 20,
-    marginVertical: 10,
   },
   outlinedButtonText: {
     fontWeight: "bold",
   },
-  footer: { marginTop: 20 },
+  footer: { margin: 20 },
   divider: {
     width: "40%",
   },
