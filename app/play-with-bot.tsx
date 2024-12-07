@@ -34,6 +34,7 @@ export default function PlayWithBot() {
 
   const isLoading = useSelector(selectIsLoading);
   const chess = useConst(() => new Chess());
+  const [isRendered, setRendered] = useState(false);
   const [isSidePickerVisible, setSidePickerVisible] = useState(true);
   const [side, setSide] = useState<string>("");
   const [state, setState] = useState({
@@ -69,6 +70,7 @@ export default function PlayWithBot() {
   }, [chess, dispatch]);
 
   const saveGameState = useCallback(async () => {
+    if (chess.history().length === 0) return;
     try {
       const gameState = {
         board: chess.fen(),
@@ -106,41 +108,37 @@ export default function PlayWithBot() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e) => {
-      if (moveHistory.length > 0 && side !== "") {
-        saveGameState();
-      }
+      saveGameState();
     });
     return unsubscribe;
   }, [navigation, saveGameState]);
 
   const onTurn = useCallback(
     (move: Move) => {
-      if (state.player === "w") {
-        setMoveHistory((prev) => [...prev, move]);
-        setState({
-          player: "b",
-          board: chess.board(),
-        });
-      }
+      setMoveHistory((prev) => [...prev, move]);
+      setState({
+        player: chess.turn(),
+        board: chess.board(),
+      });
     },
     [chess, state.player]
   );
 
-  // const makeBotMove = useCallback(() => {
-  //   const bestMove = getBestMove(chess, 3, side === "w" ? false : true);
-  //   const movelog = chess.move(bestMove);
-  //   setMoveHistory((prev) => [...prev, movelog]);
-  //   setState({
-  //     player: "w",
-  //     board: chess.board(),
-  //   });
-  // }, [chess]);
+  const makeBotMove = useCallback(() => {
+    const bestMove = getBestMove(chess, 2, side === "w" ? false : true);
+    const movelog = chess.move(bestMove);
+    setMoveHistory((prev) => [...prev, movelog]);
+    setState({
+      player: chess.turn(),
+      board: chess.board(),
+    });
+  }, [chess]);
 
-  // useEffect(() => {
-  //   if (state.player !== side && side !== "") {
-  //     makeBotMove();
-  //   }
-  // }, [state.board, makeBotMove, side]);
+  useEffect(() => {
+    if (side !== "" && state.board.length > 0 && state.player !== side) {
+      makeBotMove();
+    }
+  }, [state.board, makeBotMove, side, state.player]);
 
   const renderBoard = useMemo(() => {
     if (state.board.length === 0) return null;
