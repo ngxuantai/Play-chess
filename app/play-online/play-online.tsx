@@ -136,8 +136,8 @@ export default function PlayOnline() {
         <Image
           source={
             side === "w"
-              ? require("../assets/chess/bk.png")
-              : require("../assets/chess/wk.png")
+              ? require("../../assets/chess/bk.png")
+              : require("../../assets/chess/wk.png")
           }
           style={styles.playerIcon}
         />
@@ -173,8 +173,8 @@ export default function PlayOnline() {
         <Image
           source={
             side === "w"
-              ? require("../assets/chess/wk.png")
-              : require("../assets/chess/bk.png")
+              ? require("../../assets/chess/wk.png")
+              : require("../../assets/chess/bk.png")
           }
           style={styles.playerIcon}
         />
