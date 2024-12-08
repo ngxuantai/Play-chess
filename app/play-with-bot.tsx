@@ -25,12 +25,17 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 import { getBestMove } from "@/utils/chessBot";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { usePlaySound } from "@/hooks/usePlaySound";
 
 const { width } = Dimensions.get("window");
+
+const moveSoundPath = require("../assets/sound/move.mp3");
+const captureSoundPath = require("../assets/sound/capture.mp3");
 
 export default function PlayWithBot() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const playSound = usePlaySound();
 
   const isLoading = useSelector(selectIsLoading);
   const chess = useConst(() => new Chess());
@@ -120,6 +125,11 @@ export default function PlayWithBot() {
         player: chess.turn(),
         board: chess.board(),
       });
+      if (move.captured) {
+        playSound(captureSoundPath);
+      } else {
+        playSound(moveSoundPath);
+      }
     },
     [chess, state.player]
   );
@@ -132,6 +142,11 @@ export default function PlayWithBot() {
       player: chess.turn(),
       board: chess.board(),
     });
+    if (movelog.captured) {
+      playSound(captureSoundPath);
+    } else {
+      playSound(moveSoundPath);
+    }
   }, [chess]);
 
   useEffect(() => {
