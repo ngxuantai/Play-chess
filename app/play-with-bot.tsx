@@ -18,12 +18,13 @@ import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
+import ChessResultModal from "@/components/ChessResultModal";
 import { useConst } from "@/hooks/useConst";
 import { Chess, Move } from "chess.js";
 import { SIZE } from "@/utils/chessUtils";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
-import { getBestMove } from "@/utils/chessBot";
+import getBestMove from "@/utils/chessBot";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePlaySound } from "@/hooks/usePlaySound";
 
@@ -39,7 +40,6 @@ export default function PlayWithBot() {
 
   const isLoading = useSelector(selectIsLoading);
   const chess = useConst(() => new Chess());
-  const [isRendered, setRendered] = useState(false);
   const [isSidePickerVisible, setSidePickerVisible] = useState(true);
   const [side, setSide] = useState<string>("");
   const [state, setState] = useState({
@@ -47,7 +47,10 @@ export default function PlayWithBot() {
     board: [] as (Piece | null)[][],
   });
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
+  const [result, setResult] = useState("");
   const [isResetDialogVisible, setResetDialogVisible] = useState(false);
+  const [isChessResultModalVisible, setChessResultModalVisible] =
+    useState(false);
 
   const loadGameState = useCallback(async () => {
     try {
@@ -85,6 +88,16 @@ export default function PlayWithBot() {
       await AsyncStorage.setItem("gameState", JSON.stringify(gameState));
     } catch (error) {
       console.error("Failed to save game state:", error);
+    }
+  }, [chess, side]);
+
+  const checkGameState = useCallback(() => {
+    if (chess.in_checkmate()) {
+      setResult(chess.turn() === "w" ? "lose" : "win");
+      setChessResultModalVisible(true);
+    } else if (chess.in_draw()) {
+      setResult("draw");
+      setChessResultModalVisible(true);
     }
   }, [chess, side]);
 
@@ -130,8 +143,9 @@ export default function PlayWithBot() {
       } else {
         playSound(moveSoundPath);
       }
+      checkGameState();
     },
-    [chess, state.player]
+    [chess, state.player, checkGameState]
   );
 
   const makeBotMove = useCallback(() => {
@@ -147,7 +161,8 @@ export default function PlayWithBot() {
     } else {
       playSound(moveSoundPath);
     }
-  }, [chess]);
+    checkGameState();
+  }, [chess, side, checkGameState]);
 
   useEffect(() => {
     if (side !== "" && state.board.length > 0 && state.player !== side) {
@@ -192,6 +207,21 @@ export default function PlayWithBot() {
         onSelectSide={(selectedSide) => {
           setSide(selectedSide);
           setSidePickerVisible(false);
+        }}
+      />
+      <ChessResultModal
+        isVisible={isChessResultModalVisible}
+        result={result}
+        side={side}
+        userName="You"
+        opponentName="Bot"
+        onPlayAgain={() => {
+          resetBoard();
+          setChessResultModalVisible(false);
+        }}
+        onExit={() => {
+          setChessResultModalVisible(false);
+          navigation.goBack();
         }}
       />
       <View style={styles.status}>
