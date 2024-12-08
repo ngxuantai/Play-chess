@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors } from "@/constants/Colors";
@@ -29,6 +30,7 @@ const ChessResultModal = ({
   onPlayAgain,
   onExit,
 }: ChessResultModalProps) => {
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const getResultMessage = () => {
     switch (result) {
       case "win":
@@ -51,7 +53,15 @@ const ChessResultModal = ({
       animationType="slide"
       transparent={true}
     >
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          {
+            width: screenWidth,
+            height: screenHeight,
+          },
+        ]}
+      >
         <View style={styles.modalContainer}>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{getResultMessage()}</Text>
@@ -132,6 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    position: "absolute",
   },
   modalContainer: {
     width: "90%",

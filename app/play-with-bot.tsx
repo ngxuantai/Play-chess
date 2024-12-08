@@ -92,10 +92,10 @@ export default function PlayWithBot() {
   }, [chess, side]);
 
   const checkGameState = useCallback(() => {
-    if (chess.in_checkmate()) {
+    if (chess.isCheckmate()) {
       setResult(chess.turn() === "w" ? "lose" : "win");
       setChessResultModalVisible(true);
-    } else if (chess.in_draw()) {
+    } else if (chess.isDraw()) {
       setResult("draw");
       setChessResultModalVisible(true);
     }
@@ -218,10 +218,12 @@ export default function PlayWithBot() {
         onPlayAgain={() => {
           resetBoard();
           setChessResultModalVisible(false);
+          console.log("Play again");
         }}
         onExit={() => {
           setChessResultModalVisible(false);
           navigation.goBack();
+          console.log("Exit");
         }}
       />
       <View style={styles.status}>
