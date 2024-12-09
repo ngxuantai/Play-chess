@@ -10,6 +10,8 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { Vector } from "react-native-redash";
 import { SIZE, toPosition, toTranslation } from "@/utils/chessUtils";
 import { Chess, Position, Move } from "chess.js";
+import { useSelector } from "react-redux";
+import { selectShowLegalMoves } from "@/redux/selectors/settingsSelectors";
 
 type Player = "b" | "w";
 type Type = "q" | "r" | "n" | "b" | "k" | "p";
@@ -49,6 +51,8 @@ const Piece = React.memo(
     const translateY = useSharedValue(position.y);
 
     const [validMoves, setValidMoves] = useState([]);
+
+    const showLegalMoves = useSelector(selectShowLegalMoves);
 
     const piece = useAnimatedStyle(() => ({
       position: "absolute",
@@ -135,6 +139,9 @@ const Piece = React.memo(
 
     const getValidMoves = useCallback(
       (from: Position) => {
+        if (!showLegalMoves) {
+          return;
+        }
         const moves = chess.moves({ square: from, verbose: true });
         setValidMoves(moves.map((m) => m.to));
       },
