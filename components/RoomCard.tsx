@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -6,30 +6,15 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 type RoomCardProps = {
   ownerName: string;
   roomId: string;
+  avatar: any; // Avatar được truyền từ danh sách phòng
   onJoinRoom: () => void;
 };
 
-const RoomCard = ({ ownerName, roomId, onJoinRoom }: RoomCardProps) => {
-  const avatarUrl = [
-    require("@/assets/chess/bb.png"),
-    require("@/assets/chess/bk.png"),
-    require("@/assets/chess/bn.png"),
-    require("@/assets/chess/bp.png"),
-    require("@/assets/chess/bq.png"),
-    require("@/assets/chess/br.png"),
-    require("@/assets/chess/wb.png"),
-    require("@/assets/chess/wk.png"),
-    require("@/assets/chess/wn.png"),
-    require("@/assets/chess/wp.png"),
-    require("@/assets/chess/wq.png"),
-    require("@/assets/chess/wr.png"),
-  ];
-  const randomAvatar = avatarUrl[Math.floor(Math.random() * avatarUrl.length)];
-
+const RoomCard = ({ ownerName, roomId, avatar, onJoinRoom }: RoomCardProps) => {
   return (
     <View style={styles.card}>
       <Image
-        source={randomAvatar}
+        source={avatar}
         style={styles.avatar}
       />
 
