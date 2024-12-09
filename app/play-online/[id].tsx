@@ -21,10 +21,14 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 import { getBestMove } from "@/utils/chessBot";
 import { timerFormat } from "@/utils/dateTimeFormat";
+import { useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
 export default function PlayOnline() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
   const chess = useConst(() => new Chess());
   const [side, setSide] = useState<string>("");
   const [state, setState] = useState({
@@ -102,6 +106,19 @@ export default function PlayOnline() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* <SidePickerModal onSelectSide={setSide} /> */}
       <TimePickerModal onTimeSelect={handleTimeSelection} />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Icon
+            name="arrow-left"
+            size={24}
+            color={Colors.BLACK}
+          ></Icon>
+        </TouchableOpacity>
+        <Text style={{ fontWeight: "bold", fontSize: 24 }}>
+          ID:
+          <Text style={{ color: Colors.DARKBLUE }}> {id}</Text>
+        </Text>
+      </View>
       <View style={styles.status}>
         <View style={styles.statusBar}>
           {moveHistory.length === 0 ? (
@@ -136,8 +153,8 @@ export default function PlayOnline() {
         <Image
           source={
             side === "w"
-              ? require("../../assets/chess/bk.png")
-              : require("../../assets/chess/wk.png")
+              ? require("@/assets/chess/bk.png")
+              : require("@/assets/chess/wk.png")
           }
           style={styles.playerIcon}
         />
@@ -173,8 +190,8 @@ export default function PlayOnline() {
         <Image
           source={
             side === "w"
-              ? require("../../assets/chess/wk.png")
-              : require("../../assets/chess/bk.png")
+              ? require("@/assets/chess/wk.png")
+              : require("@/assets/chess/bk.png")
           }
           style={styles.playerIcon}
         />
@@ -207,6 +224,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.WHITE,
+  },
+  header: {
+    display: "flex",
+    flexDirection: "row",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    alignItems: "center",
+    gap: 10,
   },
   status: {
     flexDirection: "row",

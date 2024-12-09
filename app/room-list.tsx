@@ -90,7 +90,7 @@ export default function RoomList() {
   const [filteredRooms, setFilteredRooms] = useState(rooms);
 
   const handleJoinRoom = (roomId: string) => {
-    console.log("Joining room:", roomId);
+    router.push(`/play-online/${roomId}`);
   };
 
   const handleSearch = () => {
@@ -149,7 +149,7 @@ export default function RoomList() {
             ownerName={room.ownerName}
             roomId={room.roomId}
             onJoinRoom={() => handleJoinRoom(room.roomId)}
-            avatar={room.avatar} // Truyền avatar cố định
+            avatar={room.avatar}
           />
         ))}
       </ScrollView>

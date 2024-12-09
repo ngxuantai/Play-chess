@@ -6,7 +6,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 type RoomCardProps = {
   ownerName: string;
   roomId: string;
-  avatar: any; // Avatar được truyền từ danh sách phòng
+  avatar: any;
   onJoinRoom: () => void;
 };
 
