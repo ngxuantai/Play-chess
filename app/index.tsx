@@ -64,7 +64,7 @@ export default function index() {
         <GameButton
           icon="web"
           text="Chơi Trực tuyến"
-          onPress={() => router.push("/play-online")}
+          onPress={() => router.push("/room-list")}
         />
         <GameButton
           icon="robot"

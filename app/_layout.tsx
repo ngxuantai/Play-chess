@@ -32,8 +32,12 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="play-online"
-          options={{ title: "Chơi trực tuyến" }}
+          name="play-online/[id]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="room-list"
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="play-with-bot"
