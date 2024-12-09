@@ -2,6 +2,7 @@ import { View, Text } from "react-native";
 import React from "react";
 import { useSelector } from "react-redux";
 import { selectTheme } from "@/redux/selectors/settingsSelectors";
+import { selectShowCoordinates } from "@/redux/selectors/settingsSelectors";
 import { Colors } from "@/constants/Colors";
 
 interface RowProps {
@@ -15,6 +16,7 @@ interface SquareProps extends RowProps {
 
 const Square = ({ row, col, flip }: SquareProps) => {
   const theme = useSelector(selectTheme);
+  const showCoordinates = useSelector(selectShowCoordinates);
 
   const backgroundColor = (row + col) % 2 === 0 ? theme[0] : theme[1];
   const color = (row + col) % 2 === 0 ? Colors.WHITE : Colors.BLACK;
@@ -27,27 +29,31 @@ const Square = ({ row, col, flip }: SquareProps) => {
         justifyContent: "space-between",
       }}
     >
-      <Text
-        style={{
-          color,
-          fontSize: 12,
-          fontWeight: "500",
-          opacity: (flip ? col < 7 : col > 0) ? 0 : 1,
-        }}
-      >
-        {8 - row}
-      </Text>
-      <Text
-        style={{
-          color,
-          fontSize: 12,
-          fontWeight: "500",
-          alignSelf: "flex-end",
-          opacity: (flip ? row > 0 : row < 7) ? 0 : 1,
-        }}
-      >
-        {String.fromCharCode("a".charCodeAt(0) + col)}
-      </Text>
+      {showCoordinates && (
+        <Text
+          style={{
+            color,
+            fontSize: 12,
+            fontWeight: "500",
+            opacity: (flip ? col < 7 : col > 0) ? 0 : 1,
+          }}
+        >
+          {8 - row}
+        </Text>
+      )}
+      {showCoordinates && (
+        <Text
+          style={{
+            color,
+            fontSize: 12,
+            fontWeight: "500",
+            alignSelf: "flex-end",
+            opacity: (flip ? row > 0 : row < 7) ? 0 : 1,
+          }}
+        >
+          {String.fromCharCode("a".charCodeAt(0) + col)}
+        </Text>
+      )}
     </View>
   );
 };

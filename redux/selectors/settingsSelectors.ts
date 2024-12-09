@@ -6,3 +6,7 @@ export const selectIsAppSoundPlaying = (state: RootState) =>
 export const selectIsBoardSoundPlaying = (state: RootState) =>
   state.settings.isBoardSoundPlaying;
 export const selectTheme = (state: RootState) => state.settings.theme;
+export const selectShowLegalMoves = (state: RootState) =>
+  state.settings.showLegalMoves;
+export const selectShowCoordinates = (state: RootState) =>
+  state.settings.showCoordinates;

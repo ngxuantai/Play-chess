@@ -6,6 +6,8 @@ const initialState = {
   isAppSoundPlaying: false,
   isBoardSoundPlaying: false,
   theme: backgroundTheme[0].colors,
+  showLegalMoves: true,
+  showCoordinates: true,
 };
 
 const saveToStorage = async (key: string, value: any) => {

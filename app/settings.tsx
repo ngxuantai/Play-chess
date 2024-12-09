@@ -62,19 +62,23 @@ export default function Settings() {
         <View style={styles.container}>
           <Text style={styles.titleText}>Tùy chọn trò chơi</Text>
           <Divider style={styles.divider} />
-          {/* <SettingRow
+          <SettingRow
             icon="square-circle"
             text="Hiển thị nước đi hợp pháp"
-          /> */}
+            state={settings.showLegalMoves}
+            onToggle={() => handleToggle("showLegalMoves")}
+          />
           {/* <SettingRow
             icon="square-edit-outline"
             text="Làm nổi bật nước đi cuối cùng"
           /> */}
-          {/* <SettingRow
-            icon="map-marker"
-            text="Hiển thị tọa độ"
-          />
           <SettingRow
+            image={require("@/assets/icons/icon-show-coordinates.png")}
+            text="Hiển thị tọa độ"
+            state={settings.showCoordinates}
+            onToggle={() => handleToggle("showCoordinates")}
+          />
+          {/* <SettingRow
             icon="crop-square"
             text="Chỉ báo kiểm tra vua"
           /> */}

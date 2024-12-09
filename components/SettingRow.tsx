@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, Switch } from "react-native";
+import { View, Text, StyleSheet, Switch, Image } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 
 type SettingRowProps = {
-  icon: string;
+  icon?: string;
+  image?: string;
   text: string;
   subtitle?: string;
   state: boolean;
@@ -13,6 +14,7 @@ type SettingRowProps = {
 
 const SettingRow = ({
   icon,
+  image,
   text,
   subtitle,
   state = false,
@@ -20,11 +22,19 @@ const SettingRow = ({
 }: SettingRowProps) => {
   return (
     <View style={styles.settingRow}>
-      <Icon
-        name={icon}
-        size={24}
-        color={Colors.DARKBLUE}
-      />
+      {icon && (
+        <Icon
+          name={icon}
+          size={24}
+          color={Colors.DARKBLUE}
+        />
+      )}
+      {image && (
+        <Image
+          source={image}
+          style={{ width: 22, height: 22 }}
+        />
+      )}
       <View style={styles.settingTextContainer}>
         <Text style={styles.settingTitle}>{text}</Text>
         {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
