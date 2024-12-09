@@ -37,34 +37,6 @@ export default function index() {
       }
     };
     loadSettings();
-
-    // function get all items from async storage
-    const getAllItems = async () => {
-      try {
-        const gameState = {
-          board: "rnb1kb1r/ppp2ppp/8/1K2q3/3p4/8/PPPP1PPP/RNBQnBNR w kq - 0 10",
-          history: [],
-          side: "w",
-        };
-        await AsyncStorage.setItem("gameState", JSON.stringify(gameState));
-        const keys = await AsyncStorage.getAllKeys();
-        const items = await AsyncStorage.multiGet(keys);
-        console.log(items);
-      } catch (error) {
-        console.error("Error getting all items:", error);
-      }
-    };
-    getAllItems();
-
-    // function remove all key and items from async storage
-    // const removeAllItems = async () => {
-    //   try {
-    //     await AsyncStorage.clear();
-    //   } catch (error) {
-    //     console.error("Error removing all items:", error);
-    //   }
-    // };
-    // removeAllItems();
   }, []);
 
   return (

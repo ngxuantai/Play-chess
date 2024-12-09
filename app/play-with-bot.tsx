@@ -143,7 +143,9 @@ export default function PlayWithBot() {
       } else {
         playSound(moveSoundPath);
       }
-      checkGameState();
+      setTimeout(() => {
+        checkGameState();
+      }, 3000);
     },
     [chess, state.player, checkGameState]
   );
@@ -161,7 +163,9 @@ export default function PlayWithBot() {
     } else {
       playSound(moveSoundPath);
     }
-    checkGameState();
+    setTimeout(() => {
+      checkGameState();
+    }, 10000);
   }, [chess, side, checkGameState]);
 
   useEffect(() => {
@@ -209,23 +213,6 @@ export default function PlayWithBot() {
           setSidePickerVisible(false);
         }}
       />
-      <ChessResultModal
-        isVisible={isChessResultModalVisible}
-        result={result}
-        side={side}
-        userName="You"
-        opponentName="Bot"
-        onPlayAgain={() => {
-          resetBoard();
-          setChessResultModalVisible(false);
-          console.log("Play again");
-        }}
-        onExit={() => {
-          setChessResultModalVisible(false);
-          navigation.goBack();
-          console.log("Exit");
-        }}
-      />
       <View style={styles.status}>
         <View style={styles.statusBar}>
           {moveHistory.length === 0 ? (
@@ -254,6 +241,25 @@ export default function PlayWithBot() {
             setResetDialogVisible(false);
           }}
           onCancel={() => setResetDialogVisible(false)}
+        />
+        <ChessResultModal
+          visible={isChessResultModalVisible}
+          result={result}
+          side={side}
+          userName="You"
+          opponentName="Bot"
+          onPlayAgain={() => {
+            resetBoard(true);
+            setChessResultModalVisible(false);
+          }}
+          onExit={() => {
+            setChessResultModalVisible(false);
+            resetBoard(true);
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "index" }],
+            });
+          }}
         />
       </View>
       <View

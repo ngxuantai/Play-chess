@@ -12,7 +12,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors } from "@/constants/Colors";
 
 interface ChessResultModalProps {
-  isVisible: boolean;
+  visible: boolean;
   result: "win" | "lose" | "draw";
   side: "w" | "b";
   userName: string;
@@ -22,7 +22,7 @@ interface ChessResultModalProps {
 }
 
 const ChessResultModal = ({
-  isVisible,
+  visible,
   result,
   side,
   userName,
@@ -30,7 +30,6 @@ const ChessResultModal = ({
   onPlayAgain,
   onExit,
 }: ChessResultModalProps) => {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const getResultMessage = () => {
     switch (result) {
       case "win":
@@ -44,24 +43,13 @@ const ChessResultModal = ({
     }
   };
 
-  console.log("ChessResultModal", isVisible);
-  console.log("ChessResultModal", result);
-
   return (
     <Modal
-      visible={isVisible}
+      visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent
     >
-      <View
-        style={[
-          styles.overlay,
-          {
-            width: screenWidth,
-            height: screenHeight,
-          },
-        ]}
-      >
+      <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{getResultMessage()}</Text>
@@ -142,7 +130,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    position: "absolute",
   },
   modalContainer: {
     width: "90%",
