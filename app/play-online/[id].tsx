@@ -19,10 +19,11 @@ import { Chess, Move } from "chess.js";
 import { SIZE } from "@/utils/chessUtils";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
-import { getBestMove } from "@/utils/chessBot";
 import { timerFormat } from "@/utils/dateTimeFormat";
 import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router";
+import ChatModal from "@/components/ChatModal";
+import ChatBubble from "react-native-chat-bubble";
 
 const { width } = Dimensions.get("window");
 
@@ -39,6 +40,11 @@ export default function PlayOnline() {
   const [whiteTime, setWhiteTime] = useState<number>(10 * 60);
   const [blackTime, setBlackTime] = useState<number>(10 * 60);
   const [additionalTime, setAdditionalTime] = useState<number | null>(null);
+  const [isChatVisible, setChatVisible] = useState<boolean>(false);
+  const [chatBubble, setChatBubble] = useState<{
+    player: string;
+    message: string;
+  } | null>(null);
 
   const handleTimeSelection = (
     selectedTime: number,
@@ -102,10 +108,26 @@ export default function PlayOnline() {
     );
   }, [state.board, side, chess, state.player]);
 
+  const handleMessageSend = (message: string) => {
+    if (message.trim() === "") return;
+
+    setChatBubble({ player: state.player, message });
+    setChatVisible(false);
+
+    setTimeout(() => {
+      setChatBubble(null);
+    }, 5000);
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* <SidePickerModal onSelectSide={setSide} /> */}
       <TimePickerModal onTimeSelect={handleTimeSelection} />
+      <ChatModal
+        visible={isChatVisible}
+        setVisble={setChatVisible}
+        onMessageSend={handleMessageSend}
+      />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon
@@ -158,6 +180,27 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
+        {chatBubble !== null && chatBubble?.player !== side && (
+          <View style={styles.chatBubble}>
+            <ChatBubble
+              isOwnMessage={false}
+              bubbleColor={Colors.GREY}
+              tailColor={Colors.GREY}
+              withTail={true}
+            >
+              <Text
+                style={[
+                  styles.chatBubbleText,
+                  {
+                    color: Colors.BLACK,
+                  },
+                ]}
+              >
+                {chatBubble?.message}
+              </Text>
+            </ChatBubble>
+          </View>
+        )}
         <Text style={styles.playerText}>Player 1</Text>
         <View style={styles.timer}>
           <Icon
@@ -195,6 +238,27 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
+        {chatBubble !== null && chatBubble?.player !== side && (
+          <View style={styles.chatBubble}>
+            <ChatBubble
+              isOwnMessage={false}
+              bubbleColor={Colors.BLUE}
+              tailColor={Colors.BLUE}
+              withTail={true}
+            >
+              <Text
+                style={[
+                  styles.chatBubbleText,
+                  {
+                    color: "white",
+                  },
+                ]}
+              >
+                {chatBubble?.message}
+              </Text>
+            </ChatBubble>
+          </View>
+        )}
         <Text style={styles.playerText}>Player 2</Text>
         <View style={styles.timer}>
           <Icon
@@ -208,7 +272,10 @@ export default function PlayOnline() {
         </View>
       </View>
       <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <TouchableOpacity style={styles.messageButton}>
+        <TouchableOpacity
+          style={styles.messageButton}
+          onPress={() => setChatVisible(true)}
+        >
           <Icon
             name="chat-processing"
             size={24}
@@ -288,5 +355,14 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     width: 45,
+  },
+  chatBubble: {
+    position: "absolute",
+    top: -40,
+    left: 50,
+  },
+  chatBubbleText: {
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
