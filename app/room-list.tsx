@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   View,
@@ -12,6 +12,9 @@ import RoomCard from "@/components/RoomCard";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
+import { gameApi } from "@/api/game.api";
+import { useDispatch, useSelector } from "react-redux";
+import { selectLoading } from "@/redux/selectors/authSelectors";
 
 const avatarUrl = [
   require("@/assets/chess/bb.png"),
@@ -30,6 +33,9 @@ const avatarUrl = [
 
 export default function RoomList() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const loading = useSelector(selectLoading);
+
   const [searchText, setSearchText] = useState("");
   const [rooms, setRooms] = useState(() =>
     [
@@ -89,6 +95,26 @@ export default function RoomList() {
 
   const [filteredRooms, setFilteredRooms] = useState(rooms);
 
+  const handleCreateRoom = () => {
+    // dispatch(startLoading("Đang tạo phòng..."));
+    // TODO: Create room
+    // gameApi
+    //   .createGame()
+    //   .then((response) => {
+    //     console.log("Room created:", response.data);
+    //     router.push(`/play-online/${response.data.id}`);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error creating room:", error);
+    //   })
+    //   .finally(() => {
+    //     dispatch(stopLoading());
+    //   });
+
+    // test
+    router.push(`/play-online/8`);
+  };
+
   const handleJoinRoom = (roomId: string) => {
     router.push(`/play-online/${roomId}`);
   };
@@ -115,7 +141,10 @@ export default function RoomList() {
         <Text style={{ fontWeight: "bold", fontSize: 24 }}>
           Danh sách phòng
         </Text>
-        <TouchableOpacity style={styles.createRoomButton}>
+        <TouchableOpacity
+          style={styles.createRoomButton}
+          onPress={handleCreateRoom}
+        >
           <Icon
             name="plus"
             size={24}

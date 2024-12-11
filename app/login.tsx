@@ -47,6 +47,7 @@ export default function Login() {
   }, [dispatch]);
 
   const handleLogin = (values: { email: string; password: string }) => {
+    console.log(values);
     dispatch(
       loginAction({
         emailOrUsername: values.email,
