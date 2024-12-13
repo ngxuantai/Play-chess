@@ -6,10 +6,12 @@ import {
   StyleSheet,
   FlatList,
 } from "react-native";
+import { TextInput } from "react-native-paper";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
+import { OptionCreateRoom } from "@/types";
 
 interface Option {
   id: number;
@@ -22,27 +24,29 @@ interface Option {
 }
 
 interface TimePickerModalProps {
-  onTimeSelect: (time: number, additionalTime?: number) => void;
+  visible: boolean;
+  onSelect: (option: OptionCreateRoom) => void;
+  onCancel: () => void;
 }
 
 export const options: Option[] = [
   {
     id: 0,
-    label: "Cổ điển",
+    label: "Rapid",
     timeText: "10 min",
     color: "green",
     time: 10 * 60,
   },
   {
     id: 1,
-    label: "Cổ điển",
+    label: "Rapid",
     timeText: "20 min",
     color: "green",
     time: 20 * 60,
   },
   {
     id: 2,
-    label: "Cổ điển",
+    label: "Rapid",
     timeText: "30 min",
     color: "green",
     time: 30 * 60,
@@ -79,15 +83,19 @@ export const options: Option[] = [
   },
 ];
 
-const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
+const TimePickerModal = ({
+  visible,
+  onSelect,
+  onCancel,
+}: TimePickerModalProps) => {
   const router = useRouter();
-  const [visible, setVisible] = useState<boolean>(true);
   const [isSelectionVisible, setIsSelectionVisible] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<Option>(options[0]);
 
-  const onClose = () => {
-    router.back();
-  };
+  const [isCustomizing, setIsCustomizing] = useState<boolean>(false);
+  const [customTime, setCustomTime] = useState<string>("");
+  const [customAdditionalTime, setCustomAdditionalTime] = useState<string>("0");
+  const [error, setError] = useState<string>("");
 
   const handleOptionSelect = (option: Option) => {
     setSelectedOption(option);
@@ -95,14 +103,39 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
   };
 
   const handleTimeSelect = () => {
-    onTimeSelect(selectedOption.time, selectedOption.additionalTime);
-    setVisible(false);
+    if (isCustomizing) {
+      if (!customTime) {
+        setError("Vui lòng nhập thời gian");
+        return;
+      }
+      const time = parseInt(customTime);
+      const additionalTime = parseInt(customAdditionalTime || "0");
+      if (time > 120) {
+        setError("Thời gian tối đa là 120 phút");
+        return;
+      } else if (additionalTime > 30) {
+        setError("Thời gian + s/di chuyển tối đa là 30 giây");
+        return;
+      } else {
+        setError("");
+        onSelect({
+          timeControl: time * 60,
+          increment: additionalTime,
+        });
+      }
+    } else {
+      onSelect({
+        timeControl: selectedOption.time,
+        increment: selectedOption.additionalTime || 0,
+      });
+      setSelectedOption(options[0]);
+    }
   };
 
   return (
     <Modal
       transparent
-      animationType="slide"
+      animationType="none"
       visible={visible}
     >
       <View style={styles.overlay}>
@@ -110,7 +143,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Chọn chế độ chơi</Text>
             <TouchableOpacity
-              onPress={onClose}
+              onPress={onCancel}
               style={styles.closeButton}
             >
               <Icon
@@ -119,35 +152,86 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
               />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.selectContainer}
-            onPress={() => setIsSelectionVisible(true)}
-          >
-            <Icon
-              name="clock-outline"
-              size={24}
-              color={selectedOption?.color || "black"}
-            />
-            <Text style={styles.selectedText}>
-              <Text style={styles.optionLabel}>{selectedOption.label} </Text>
-              <Text style={styles.optionValue}>{selectedOption.timeText} </Text>
-              {selectedOption.additionalTimeText && (
-                <Text style={styles.optionDescription}>
-                  {selectedOption.additionalTimeText}
+          {!isCustomizing && (
+            <TouchableOpacity
+              style={styles.selectContainer}
+              onPress={() => setIsSelectionVisible(true)}
+            >
+              <Icon
+                name="clock-outline"
+                size={32}
+                color={selectedOption?.color || "black"}
+              />
+              <Text style={styles.selectedText}>
+                <Text style={styles.optionLabel}>{selectedOption.label} </Text>
+                <Text style={styles.optionValue}>
+                  {selectedOption.timeText}{" "}
                 </Text>
-              )}
-            </Text>
-            <Icon
-              name="chevron-down"
-              size={24}
-              color="#000"
-            />
+                {selectedOption.additionalTimeText && (
+                  <Text style={styles.optionDescription}>
+                    {selectedOption.additionalTimeText}
+                  </Text>
+                )}
+              </Text>
+              <Icon
+                name="chevron-down"
+                size={24}
+                color="#000"
+              />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            onPress={() => {
+              if (isCustomizing) {
+                setCustomTime("");
+                setCustomAdditionalTime("");
+              }
+              setIsCustomizing((prev) => !prev);
+            }}
+          >
+            <Text style={styles.customText}>Tùy chỉnh thời gian</Text>
           </TouchableOpacity>
-
-          <Text style={styles.infoText}>
-            🕒 Thời gian chơi cho một người chơi
-          </Text>
-
+          {isCustomizing && (
+            <View
+              style={{
+                width: "100%",
+                flexDirection: "row",
+                alignItems: "space-between",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <TextInput
+                label="min"
+                value={customTime}
+                onChangeText={setCustomTime}
+                onBlur={() => setError("")}
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  width: "45%",
+                  backgroundColor: "rgba(0, 0, 0, 0)",
+                }}
+                contentStyle={{ paddingLeft: 8 }}
+                keyboardType="number-pad"
+              />
+              <TextInput
+                label="+ s/di chuyển"
+                value={customAdditionalTime}
+                onChangeText={setCustomAdditionalTime}
+                onBlur={() => setError("")}
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  width: "45%",
+                  backgroundColor: "rgba(0, 0, 0, 0)",
+                }}
+                contentStyle={{ paddingLeft: 8 }}
+                keyboardType="number-pad"
+              />
+            </View>
+          )}
+          {error && <Text style={styles.errorText}>{error}</Text>}
           <TouchableOpacity
             style={styles.selectButton}
             onPress={handleTimeSelect}
@@ -164,7 +248,11 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
             visible={isSelectionVisible}
             onRequestClose={() => setIsSelectionVisible(false)}
           >
-            <View style={styles.overlay}>
+            <TouchableOpacity
+              style={styles.overlay}
+              activeOpacity={1}
+              onPress={() => setIsSelectionVisible(false)}
+            >
               <View style={styles.optionsContainer}>
                 <FlatList
                   data={options}
@@ -176,7 +264,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
                     >
                       <Icon
                         name="clock-outline"
-                        size={24}
+                        size={28}
                         color={item.color}
                       />
                       <View style={styles.optionContent}>
@@ -192,7 +280,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onTimeSelect }) => {
                   )}
                 />
               </View>
-            </View>
+            </TouchableOpacity>
           </Modal>
         )}
       </View>
@@ -240,19 +328,13 @@ const styles = StyleSheet.create({
     color: "black",
     fontWeight: 600,
   },
-  infoText: {
-    fontSize: 14,
-    color: "gray",
-    marginTop: 10,
-    textAlign: "center",
-  },
   selectContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
     width: "100%",
     borderBottomColor: Colors.BLACK,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
   },
   selectedText: {
     flex: 1,
@@ -274,7 +356,8 @@ const styles = StyleSheet.create({
     width: "90%",
     maxHeight: "70%",
     borderRadius: 10,
-    padding: 10,
+    padding: 14,
+    paddingInline: 20,
   },
   option: {
     flexDirection: "row",
@@ -284,12 +367,11 @@ const styles = StyleSheet.create({
   optionContent: {
     flexDirection: "row",
     width: "100%",
-    paddingVertical: 5,
   },
   optionLabel: {
     fontSize: 18,
     marginHorizontal: 10,
-    color: Colors.GREY,
+    color: "gray",
     fontWeight: "900",
   },
   optionValue: {
@@ -299,7 +381,28 @@ const styles = StyleSheet.create({
   },
   optionDescription: {
     fontSize: 18,
-    color: Colors.GREEN,
+    color: "green",
+  },
+  customText: {
+    margin: 12,
+    fontSize: 16,
+    color: "black",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 15,
+    width: "40%",
+    borderRadius: 20,
+    color: Colors.BLACK,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 2,
+    alignSelf: "center",
   },
 });
 

@@ -10,18 +10,35 @@ import {
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
+import { setToken } from "@/redux/slices/authSlice";
+import { getProfileAction } from "@/redux/actions/authActions";
 import { setSetting } from "@/redux/slices/settingsSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
+import { AppDispatch } from "@/redux/store";
 
 const { width } = Dimensions.get("window");
 
 export default function index() {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        // console.log("Token:", token);
+        if (token === null) {
+          router.push("/login");
+        } else {
+          // dispatch(setToken(token));
+          dispatch(getProfileAction(token));
+        }
+      } catch (error) {
+        console.error("Error loading token:", error);
+      }
+    };
     const loadSettings = async () => {
       try {
         const settings = await AsyncStorage.getItem("settings");
@@ -36,7 +53,8 @@ export default function index() {
         console.error("Error loading settings:", error);
       }
     };
-    loadSettings();
+
+    Promise.all([loadToken(), loadSettings()]);
   }, []);
 
   return (

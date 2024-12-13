@@ -152,7 +152,9 @@ export default function PlayWithBot() {
 
   const makeBotMove = useCallback(() => {
     const bestMove = getBestMove(chess, 2, side === "w" ? false : true);
+    console.log("Best move:", bestMove);
     const movelog = chess.move(bestMove);
+    console.log("Move log:", movelog);
     setMoveHistory((prev) => [...prev, movelog]);
     setState({
       player: chess.turn(),

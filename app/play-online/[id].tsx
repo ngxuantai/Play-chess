@@ -1,3 +1,7 @@
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { Chess, Move } from "chess.js";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSelector, useDispatch } from "react-redux";
 import {
   View,
   Text,
@@ -6,81 +10,153 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import SidePickerModal from "@/components/SidePickerModal";
-import TimePickerModal from "@/components/TimePickerModel";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
+import ChessResultModal from "@/components/ChessResultModal";
+import GlobalLoading from "@/components/GlobalLoading";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
 import { useConst } from "@/hooks/useConst";
-import { Chess, Move } from "chess.js";
+import { useSocketEvent } from "@/hooks/useSocketEvent";
 import { SIZE } from "@/utils/chessUtils";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { Colors } from "@/constants/Colors";
-import { getBestMove } from "@/utils/chessBot";
 import { timerFormat } from "@/utils/dateTimeFormat";
-import { useLocalSearchParams } from "expo-router";
-import { useRouter } from "expo-router";
+import { Colors } from "@/constants/Colors";
+import { authApi } from "@/api/auth.api";
+import socketService from "@/api/socket.service";
+import { selectAccessToken, selectUser } from "@/redux/selectors/authSelectors";
+import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
+import { stopLoading } from "@/redux/slices/loadingSlice";
+import { PlayerInfo } from "@/types";
 
 const { width } = Dimensions.get("window");
 
 export default function PlayOnline() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const dispatch = useDispatch();
+  const token = useSelector(selectAccessToken);
+  const user = useSelector(selectUser);
+  const isLoading = useSelector(selectIsLoading);
+
   const chess = useConst(() => new Chess());
+  const [activeBoard, setActiveBoard] = useState<"waiting" | "active">(
+    "waiting"
+  );
   const [side, setSide] = useState<string>("");
+  const [players, setPlayers] = useState<{
+    white: PlayerInfo;
+    black: PlayerInfo;
+  }>({
+    white: {
+      id: null,
+      username: null,
+    },
+    black: {
+      id: null,
+      username: null,
+    },
+  });
+  const [whiteTime, setWhiteTime] = useState<number>(0);
+  const [blackTime, setBlackTime] = useState<number>(0);
   const [state, setState] = useState({
     player: "w",
-    board: chess.board(),
+    board: [],
   });
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
-  const [whiteTime, setWhiteTime] = useState<number>(10 * 60);
-  const [blackTime, setBlackTime] = useState<number>(10 * 60);
-  const [additionalTime, setAdditionalTime] = useState<number | null>(null);
-
-  const handleTimeSelection = (
-    selectedTime: number,
-    additionalTime?: number
-  ) => {
-    setWhiteTime(selectedTime);
-    setBlackTime(selectedTime);
-    setAdditionalTime(additionalTime || null);
-  };
+  const [result, setResult] = useState<string | null>(null);
+  const [showResignDialog, setShowResignDialog] = useState<boolean>(false);
+  const [showChessResultModal, setShowChessResultModal] =
+    useState<boolean>(false);
 
   useEffect(() => {
+    socketService.connect(token);
+    socketService.emit("joinGame", { gameId: Number(id) });
+
+    return () => {
+      socketService.disconnect();
+    };
+  }, [token, id]);
+
+  useSocketEvent("gameState", (data) => {
+    setActiveBoard((prev) => (prev === data.status ? prev : data.status));
+
+    setPlayers((prevPlayers) => {
+      if (prevPlayers.white.id === null || prevPlayers.black.id === null) {
+        const isWhite = data.whitePlayerId === user?.id;
+        setSide(isWhite ? "w" : "b");
+
+        return {
+          white: {
+            id: data.whitePlayerId,
+            username: isWhite ? user?.username : prevPlayers.white.username,
+          },
+          black: {
+            id: data.blackPlayerId,
+            username: !isWhite ? user?.username : prevPlayers.black.username,
+          },
+        };
+      }
+      return prevPlayers;
+    });
+
+    chess.load(data.fen);
+    setState({
+      player: data.turn,
+      board: chess.board(),
+    });
+    setWhiteTime(data.whiteTimeRemaining);
+    setBlackTime(data.blackTimeRemaining);
+  });
+
+  useSocketEvent("gameOver", (data) => {
+    if (data.winner === null) {
+      setResult("draw");
+    } else if (data.winner === user?.id) {
+      setResult("win");
+    } else {
+      setResult("lose");
+    }
+    setShowChessResultModal(true);
+  });
+
+  const handleTimer = useCallback(() => {
     let timer: NodeJS.Timeout | null = null;
 
-    if (state.player === "w") {
-      timer = setInterval(() => {
-        setWhiteTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-      }, 1000);
-    } else if (state.player === "b") {
-      timer = setInterval(() => {
-        setBlackTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-      }, 1000);
+    if (activeBoard === "active") {
+      const updateTimer = () => {
+        if (state.player === "w") {
+          setWhiteTime((prev) => Math.max(prev - 1, 0));
+        } else if (state.player === "b") {
+          setBlackTime((prev) => Math.max(prev - 1, 0));
+        }
+      };
+      timer = setInterval(updateTimer, 1000);
     }
 
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [state.player]);
+  }, [activeBoard, state.player]);
+
+  useEffect(() => {
+    const cleanup = handleTimer();
+    return cleanup;
+  }, [handleTimer]);
 
   const onTurn = useCallback(
     (move: Move) => {
-      if (state.player === "w") {
-        setMoveHistory((prev) => [...prev, move]);
-        setState({
-          player: "b",
-          board: chess.board(),
-        });
-      }
+      socketService.emit("move", {
+        gameId: Number(id),
+        move: move.san,
+      });
     },
     [chess, state.player]
   );
 
   const renderBoard = useMemo(() => {
+    if (state.board.length === 0) return null;
     return state.board.map((row, rowIndex) =>
       row.map((square, colIndex) => {
         if (square === null) return null;
@@ -95,17 +171,59 @@ export default function PlayOnline() {
             chess={chess}
             flip={side !== "" && side === "b"}
             onTurn={onTurn}
-            enabled={state.player === side && side !== ""}
+            enabled={chess.turn() === side && side === square.color}
           />
         );
       })
     );
   }, [state.board, side, chess, state.player]);
 
+  useEffect(() => {
+    if (state.board.length !== 0) {
+      dispatch(stopLoading());
+    }
+  }, [state.board]);
+
+  useEffect(() => {
+    const fetchPlayerInfo = async (
+      playerId: string,
+      side: "white" | "black"
+    ) => {
+      try {
+        const { data } = await authApi.getUserById(playerId);
+        setPlayers((prev) => ({
+          ...prev,
+          [side]: {
+            ...prev[side],
+            username: data?.username,
+          },
+        }));
+      } catch (error) {
+        console.error(`Error fetching player info for ${side}:`, error);
+      }
+    };
+
+    if (activeBoard === "active") {
+      const fetchData = async () => {
+        if (side === "w" && players.black.id) {
+          await fetchPlayerInfo(players.black.id, "black");
+        } else if (side === "b" && players.white.id) {
+          await fetchPlayerInfo(players.white.id, "white");
+        }
+      };
+      fetchData();
+    }
+  }, [activeBoard, side, players.black.id, players.white.id]);
+
+  if (isLoading)
+    return (
+      <View style={styles.container}>
+        <GlobalLoading />
+      </View>
+    );
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* <SidePickerModal onSelectSide={setSide} /> */}
-      <TimePickerModal onTimeSelect={handleTimeSelection} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon
@@ -136,13 +254,35 @@ export default function PlayOnline() {
             color={Colors.DARKBLUE}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.refreshButton}>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={() => setShowResignDialog(true)}
+        >
           <Icon
             name="flag"
             size={24}
             color={Colors.DARKBLUE}
           />
         </TouchableOpacity>
+        <ConfirmationDialog
+          text="Bạn có chắc chắn muốn đầu hàng?"
+          visible={showResignDialog}
+          onConfirm={() => {
+            socketService.emit("resign", { gameId: Number(id) });
+            setShowResignDialog(false);
+          }}
+          onCancel={() => setShowResignDialog(false)}
+        />
+        <ChessResultModal
+          visible={showChessResultModal}
+          result={result}
+          side={side}
+          userName={user?.username}
+          opponentName={
+            side === "w" ? players.black.username : players.white.username
+          }
+          onExit={() => setShowChessResultModal(false)}
+        />
       </View>
       <View
         style={[
@@ -158,7 +298,11 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
-        <Text style={styles.playerText}>Player 1</Text>
+        <Text style={styles.playerText}>
+          {activeBoard === "waiting"
+            ? "Đang chờ đối thủ..."
+            : players.black.username}
+        </Text>
         <View style={styles.timer}>
           <Icon
             name="clock-outline"
@@ -195,7 +339,7 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
-        <Text style={styles.playerText}>Player 2</Text>
+        <Text style={styles.playerText}>{user?.username}</Text>
         <View style={styles.timer}>
           <Icon
             name="clock-outline"

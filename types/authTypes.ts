@@ -12,11 +12,17 @@ export interface RegisterCredentials {
 export interface AuthState {
   isAuthenticated: boolean;
   user: {
-    id?: string;
+    id?: number;
     email?: string;
-    name?: string;
+    username?: string;
+    rating: number;
   } | null;
   access_token?: string | null;
   loading: boolean;
   error: string | null;
+}
+
+export interface PlayerInfo {
+  id?: number | null;
+  username?: string | null;
 }
