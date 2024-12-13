@@ -1,3 +1,7 @@
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { Chess, Move } from "chess.js";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSelector, useDispatch } from "react-redux";
 import {
   View,
   Text,
@@ -6,9 +10,8 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import TimePickerModal from "@/components/TimePickerModel";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import MoveHistory from "@/components/MoveHistory";
 import ConfirmationDialog from "@/components/ConfirmDialog";
 import ChessResultModal from "@/components/ChessResultModal";
@@ -16,19 +19,16 @@ import GlobalLoading from "@/components/GlobalLoading";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
 import { useConst } from "@/hooks/useConst";
-import { Chess, Move } from "chess.js";
+import { useSocketEvent } from "@/hooks/useSocketEvent";
 import { SIZE } from "@/utils/chessUtils";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { Colors } from "@/constants/Colors";
 import { timerFormat } from "@/utils/dateTimeFormat";
+import { Colors } from "@/constants/Colors";
+import { authApi } from "@/api/auth.api";
 import socketService from "@/api/socket.service";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useSelector, useDispatch } from "react-redux";
 import { selectAccessToken, selectUser } from "@/redux/selectors/authSelectors";
 import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
-import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
+import { stopLoading } from "@/redux/slices/loadingSlice";
 import { PlayerInfo } from "@/types";
-import { authApi } from "@/api/auth.api";
 
 const { width } = Dimensions.get("window");
 
@@ -70,98 +70,83 @@ export default function PlayOnline() {
   const [showChessResultModal, setShowChessResultModal] =
     useState<boolean>(false);
 
-  // const handleTimeSelection = (
-  //   selectedTime: number,
-  //   additionalTime?: number
-  // ) => {
-  //   setWhiteTime(selectedTime);
-  //   setBlackTime(selectedTime);
-  //   setAdditionalTime(additionalTime || null);
-  // };
-
   useEffect(() => {
-    dispatch(startLoading("Đang tải bàn cờ..."));
-
     socketService.connect(token);
-
-    socketService.on("gameState", (data) => {
-      console.log("Nhận trạng thái game:", data);
-      setActiveBoard(data.status);
-      if (data.whitePlayerId === user?.id) {
-        setSide("w");
-        setPlayers((prev) => ({
-          ...prev,
-          white: {
-            id: user?.id,
-            username: user?.username,
-          },
-          black: {
-            id: data.blackPlayerId,
-          },
-        }));
-      } else if (data.blackPlayerId === user?.id) {
-        setSide("b");
-        setPlayers((prev) => ({
-          ...prev,
-          white: {
-            id: data.whitePlayerId,
-          },
-          black: {
-            id: user?.id,
-            username: user?.username,
-          },
-        }));
-      }
-
-      chess.load(data.fen);
-      console.log("FEN:", chess.history());
-      setState({
-        player: data.turn,
-        board: chess.board(),
-      });
-      setWhiteTime(data.whiteTimeRemaining);
-      setBlackTime(data.blackTimeRemaining);
-    });
-
-    socketService.on("gameOver", (data) => {
-      if (data.winner === null) {
-        setResult("draw");
-      } else if (data.winner === user?.id) {
-        setResult("win");
-      } else {
-        setResult("lose");
-      }
-      setShowChessResultModal(true);
-    });
-
     socketService.emit("joinGame", { gameId: Number(id) });
 
     return () => {
       socketService.disconnect();
     };
-  }, []);
+  }, [token, id]);
 
-  useEffect(() => {
+  useSocketEvent("gameState", (data) => {
+    setActiveBoard((prev) => (prev === data.status ? prev : data.status));
+
+    setPlayers((prevPlayers) => {
+      if (prevPlayers.white.id === null || prevPlayers.black.id === null) {
+        const isWhite = data.whitePlayerId === user?.id;
+        setSide(isWhite ? "w" : "b");
+
+        return {
+          white: {
+            id: data.whitePlayerId,
+            username: isWhite ? user?.username : prevPlayers.white.username,
+          },
+          black: {
+            id: data.blackPlayerId,
+            username: !isWhite ? user?.username : prevPlayers.black.username,
+          },
+        };
+      }
+      return prevPlayers;
+    });
+
+    chess.load(data.fen);
+    setState({
+      player: data.turn,
+      board: chess.board(),
+    });
+    setWhiteTime(data.whiteTimeRemaining);
+    setBlackTime(data.blackTimeRemaining);
+  });
+
+  useSocketEvent("gameOver", (data) => {
+    if (data.winner === null) {
+      setResult("draw");
+    } else if (data.winner === user?.id) {
+      setResult("win");
+    } else {
+      setResult("lose");
+    }
+    setShowChessResultModal(true);
+  });
+
+  const handleTimer = useCallback(() => {
     let timer: NodeJS.Timeout | null = null;
 
-    if (state.player === "w") {
-      timer = setInterval(() => {
-        setWhiteTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-      }, 1000);
-    } else if (state.player === "b") {
-      timer = setInterval(() => {
-        setBlackTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-      }, 1000);
+    if (activeBoard === "active") {
+      const updateTimer = () => {
+        if (state.player === "w") {
+          setWhiteTime((prev) => Math.max(prev - 1, 0));
+        } else if (state.player === "b") {
+          setBlackTime((prev) => Math.max(prev - 1, 0));
+        }
+      };
+      timer = setInterval(updateTimer, 1000);
     }
 
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [state.player]);
+  }, [activeBoard, state.player]);
+
+  useEffect(() => {
+    const cleanup = handleTimer();
+    return cleanup;
+  }, [handleTimer]);
 
   const onTurn = useCallback(
     (move: Move) => {
-      console.log("onTurn:", move);
       socketService.emit("move", {
         gameId: Number(id),
         move: move.san,
@@ -200,40 +185,35 @@ export default function PlayOnline() {
   }, [state.board]);
 
   useEffect(() => {
-    const getUserById = async (id: string) => {
+    const fetchPlayerInfo = async (
+      playerId: string,
+      side: "white" | "black"
+    ) => {
       try {
-        const response = await authApi.getUserById(id);
-        console.log("getUserById:", response.data);
-        return response.data;
-      } catch (error: any) {
-        console.error("Error getUserById:", error);
+        const { data } = await authApi.getUserById(playerId);
+        setPlayers((prev) => ({
+          ...prev,
+          [side]: {
+            ...prev[side],
+            username: data?.username,
+          },
+        }));
+      } catch (error) {
+        console.error(`Error fetching player info for ${side}:`, error);
       }
     };
 
     if (activeBoard === "active") {
-      if (side === "w") {
-        getUserById(players.black.id).then((data) => {
-          setPlayers((prev) => ({
-            ...prev,
-            black: {
-              ...prev.black,
-              username: data?.username,
-            },
-          }));
-        });
-      } else if (side === "b") {
-        getUserById(players.white.id).then((data) => {
-          setPlayers((prev) => ({
-            ...prev,
-            white: {
-              ...prev.white,
-              username: data?.username,
-            },
-          }));
-        });
-      }
+      const fetchData = async () => {
+        if (side === "w" && players.black.id) {
+          await fetchPlayerInfo(players.black.id, "black");
+        } else if (side === "b" && players.white.id) {
+          await fetchPlayerInfo(players.white.id, "white");
+        }
+      };
+      fetchData();
     }
-  }, [activeBoard, side]);
+  }, [activeBoard, side, players.black.id, players.white.id]);
 
   if (isLoading)
     return (
@@ -244,7 +224,6 @@ export default function PlayOnline() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* <TimePickerModal onTimeSelect={handleTimeSelection} /> */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon

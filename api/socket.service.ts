@@ -1,13 +1,11 @@
 import io, { Socket } from "socket.io-client";
-import { BASE_URL } from "@env";
 
 class socketService {
   private socket: Socket | null = null;
 
   connect(token: string) {
-    console.log("Kết nối socket", token);
     if (!this.socket) {
-      this.socket = io(`${BASE_URL}/games`, {
+      this.socket = io("http://192.168.31.242:8080/games", {
         transports: ["websocket"],
         auth: {
           token,
@@ -49,6 +47,14 @@ class socketService {
       this.socket.on(event, callback);
     } else {
       console.warn("Socket chưa được kết nối on!");
+    }
+  }
+
+  off(event: string, callback: (...args: any[]) => void) {
+    if (this.socket) {
+      this.socket.off(event, callback);
+    } else {
+      console.warn("Socket chưa được kết nối off!");
     }
   }
 
