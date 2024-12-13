@@ -15,7 +15,7 @@ const saveToStorage = async (key: string, value: any) => {
     const updatedSetting = { [key]: value };
     await AsyncStorage.mergeItem("settings", JSON.stringify(updatedSetting));
   } catch (error) {
-    console.error(`Error saving ${key}:`, error);
+    console.log(`Error saving ${key}:`, error);
   }
 };
 

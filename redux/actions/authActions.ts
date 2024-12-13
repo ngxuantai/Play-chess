@@ -51,10 +51,7 @@ export const registerAction = createAsyncThunk(
         access_token: response.data.access_token,
       };
     } catch (error: any) {
-      return rejectWithValue(
-        // error.message ||
-        "Đăng ký thất bại"
-      );
+      return rejectWithValue(error.message || "Đăng ký thất bại");
     }
   }
 );
@@ -75,7 +72,6 @@ export const getProfileAction = createAsyncThunk(
         },
       };
     } catch (error: any) {
-      console.log("Error get:", error);
       return rejectWithValue("Lỗi lấy thông tin người dùng");
     }
   }
@@ -86,7 +82,7 @@ export const logoutAction = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("access_token");
 
       return null;
     } catch (error) {

@@ -13,17 +13,32 @@ export const authApi = {
   },
 
   register: async (credentials: RegisterCredentials) => {
-    const response = await axiosInstance.post("/auth/register", credentials);
-    return response;
+    try {
+      const response = await axiosInstance.post("/auth/register", credentials);
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
   },
 
   getProfile: async () => {
-    const response = await axiosInstance.get("/auth/profile");
-    return response;
+    try {
+      const response = await axiosInstance.get("/auth/profile");
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
   },
 
   getUserById: async (id: string) => {
-    const response = await axiosInstance.get(`/players/${id}`);
-    return response;
+    try {
+      const response = await axiosInstance.get(`/players/${id}`);
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
   },
 };

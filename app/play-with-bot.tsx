@@ -71,7 +71,7 @@ export default function PlayWithBot() {
         resetBoard(false);
       }
     } catch (error) {
-      console.error("Failed to load game state:", error);
+      console.log("Failed to load game state:", error);
     } finally {
       dispatch(stopLoading());
     }
@@ -87,7 +87,7 @@ export default function PlayWithBot() {
       };
       await AsyncStorage.setItem("gameState", JSON.stringify(gameState));
     } catch (error) {
-      console.error("Failed to save game state:", error);
+      console.log("Failed to save game state:", error);
     }
   }, [chess, side]);
 
@@ -113,7 +113,7 @@ export default function PlayWithBot() {
       setSidePickerVisible(true);
       if (isInitial) {
         AsyncStorage.removeItem("gameState").catch((error) =>
-          console.error("Failed to delete game state", error)
+          console.log("Failed to delete game state", error)
         );
       }
     },
@@ -152,9 +152,7 @@ export default function PlayWithBot() {
 
   const makeBotMove = useCallback(() => {
     const bestMove = getBestMove(chess, 2, side === "w" ? false : true);
-    console.log("Best move:", bestMove);
     const movelog = chess.move(bestMove);
-    console.log("Move log:", movelog);
     setMoveHistory((prev) => [...prev, movelog]);
     setState({
       player: chess.turn(),
