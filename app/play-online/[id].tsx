@@ -45,6 +45,9 @@ export default function PlayOnline() {
     player: string;
     message: string;
   } | null>(null);
+  const [chatHistory, setChatHistory] = useState<
+    { player: string; message: string }[]
+  >([]);
 
   const handleTimeSelection = (
     selectedTime: number,
@@ -112,6 +115,7 @@ export default function PlayOnline() {
     if (message.trim() === "") return;
 
     setChatBubble({ player: state.player, message });
+    setChatHistory((prev) => [...prev, { player: state.player, message }]);
     setChatVisible(false);
 
     setTimeout(() => {
@@ -126,6 +130,7 @@ export default function PlayOnline() {
       <ChatModal
         visible={isChatVisible}
         setVisble={setChatVisible}
+        chatHistory={chatHistory}
         onMessageSend={handleMessageSend}
       />
       <View style={styles.header}>

@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/Colors";
+import { current } from "@reduxjs/toolkit";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -61,15 +62,21 @@ const quickMessages = [
 interface ChatModalProps {
   visible: boolean;
   setVisble: (visible: boolean) => void;
+  chatHistory: { player: string; message: string }[];
   onMessageSend: (message: string) => void;
 }
 
 const ChatModal: React.FC<ChatModalProps> = ({
   visible = false,
   setVisble,
+  chatHistory,
   onMessageSend,
 }) => {
   const [message, setMessage] = useState<string>("");
+  const [currentTab, setCurrentTab] = useState<"history" | "quickMessage">(
+    "history"
+  );
+
   const onClose = () => {
     setVisble(false);
   };
@@ -77,8 +84,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
   useEffect(() => {
     if (visible) {
       setMessage("");
+      setCurrentTab("history");
     }
-  }, [visible, setMessage]);
+  }, [visible]);
 
   const handlePress = (message: string) => {
     onMessageSend(message);
@@ -109,36 +117,63 @@ const ChatModal: React.FC<ChatModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <FlatList
-            data={emojis}
-            numColumns={8}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.emojiButton}
-                onPress={() => handlePress(item)}
-              >
-                <Text style={styles.emojiText}>{item}</Text>
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.emojiContainer}
-          />
+          {currentTab === "history" ? (
+            <FlatList
+              data={chatHistory}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View
+                  style={[
+                    styles.messageBubble,
+                    item.player === "w"
+                      ? styles.whiteBubble
+                      : styles.blackBubble,
+                  ]}
+                >
+                  <Text style={styles.messageText}>{item.message}</Text>
+                </View>
+              )}
+            />
+          ) : (
+            <>
+              <FlatList
+                data={emojis}
+                numColumns={8}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.emojiButton}
+                    onPress={() => handlePress(item)}
+                  >
+                    <Text style={styles.emojiText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={styles.emojiContainer}
+              />
 
-          <FlatList
-            data={quickMessages}
-            numColumns={3}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.quickMessageButton}
-                onPress={() => handlePress(item)}
-              >
-                <Text style={styles.quickMessageText}>{item}</Text>
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.quickMessageContainer}
-          />
+              <FlatList
+                data={quickMessages}
+                numColumns={3}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.quickMessageButton}
+                    onPress={() => handlePress(item)}
+                  >
+                    <Text style={styles.quickMessageText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={styles.quickMessageContainer}
+              />
+            </>
+          )}
           <View style={styles.messageContainer}>
+            <TouchableOpacity onPress={() => setCurrentTab("quickMessage")}>
+              <Icon
+                name="lightning-bolt"
+                size={26}
+              />
+            </TouchableOpacity>
             <TextInput
               placeholder="Tin nhắn..."
               style={styles.messageInput}
@@ -192,6 +227,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "gray",
   },
+  historyContainer: {
+    marginVertical: 10,
+    width: "100%",
+  },
+  historyMessage: {
+    fontSize: 16,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderColor: "gray",
+  },
+  messageBubble: {
+    marginVertical: 5,
+    padding: 10,
+    borderRadius: 10,
+    maxWidth: "80%",
+  },
+  whiteBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: "#e0e0e0",
+  },
+  blackBubble: {
+    alignSelf: "flex-end",
+    backgroundColor: "#0078FF",
+  },
+  messageText: {
+    color: "white",
+  },
   title: {
     fontSize: 20,
     fontWeight: "bold",
@@ -230,7 +292,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   messageInput: {
-    width: "82%",
+    width: "75%",
     padding: 10,
     borderRadius: 15,
     borderWidth: 1,
