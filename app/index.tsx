@@ -9,8 +9,9 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { selectIsAuthenticated } from "@/redux/selectors/authSelectors";
+import { startLoading } from "@/redux/slices/loadingSlice";
 import { Colors } from "@/constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -18,6 +19,7 @@ const { width } = Dimensions.get("window");
 
 export default function index() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
   return (
@@ -66,10 +68,11 @@ export default function index() {
           }}
         />
         <GameButton
-          icon="account-group"
-          text="Chơi với bạn bè"
+          icon="puzzle"
+          text="Câu đố"
           onPress={() => {
-            router.push("/login");
+            dispatch(startLoading("Đang tạo câu đố"));
+            router.push("/play-puzzles");
           }}
         />
         <GameButton

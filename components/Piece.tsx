@@ -39,10 +39,11 @@ interface PieceProps {
   flip: boolean;
   onTurn: (move: Move) => void;
   enabled: boolean;
+  isPuzzle?: boolean;
 }
 
 const Piece = React.memo(
-  ({ id, position, chess, flip, onTurn, enabled }: PieceProps) => {
+  ({ id, position, chess, flip, onTurn, enabled, isPuzzle }: PieceProps) => {
     const isGestureActive = useSharedValue(false);
     const scale = useSharedValue(1);
     const offsetX = useSharedValue(0);
@@ -129,8 +130,12 @@ const Piece = React.memo(
           offsetY.value = translateY.value;
         });
         if (move) {
-          chess.move(move);
-          onTurn(move);
+          if (isPuzzle) {
+            onTurn(move);
+          } else {
+            chess.move(move);
+            onTurn(move);
+          }
         }
         setValidMoves([]);
       },
