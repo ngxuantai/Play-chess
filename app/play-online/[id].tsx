@@ -199,7 +199,7 @@ export default function PlayOnline() {
           },
         }));
       } catch (error) {
-        console.error(`Error fetching player info for ${side}:`, error);
+        console.log(`Error fetching player info for ${side}:`, error);
       }
     };
 

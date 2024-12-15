@@ -7,7 +7,7 @@ export const gameApi = {
       const response = await axiosInstance.post("/games", option);
       return response;
     } catch (error: any) {
-      console.error("Error:", error);
+      console.log("Error:", error);
       throw error.response.data;
     }
   },

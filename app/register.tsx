@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { registerAction } from "@/redux/actions/authActions";
 import { selectAuth } from "@/redux/selectors/authSelectors";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Divider } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -41,6 +41,7 @@ const signUpValidationSchema = Yup.object().shape({
 
 export default function Register() {
   const router = useRouter();
+  const { redirectTo } = useLocalSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, isAuthenticated } = useSelector(selectAuth);
 
@@ -64,6 +65,14 @@ export default function Register() {
       })
     );
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else router.dismissAll();
+    }
+  }, [isAuthenticated]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -221,7 +230,14 @@ export default function Register() {
         Đã có tài khoản?{" "}
         <Text
           style={styles.link}
-          onPress={() => router.push("/login")}
+          onPress={() =>
+            router.push({
+              pathname: "/login",
+              params: {
+                redirectTo: redirectTo,
+              },
+            })
+          }
         >
           Đăng nhập
         </Text>

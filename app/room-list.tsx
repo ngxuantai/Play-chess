@@ -128,11 +128,10 @@ export default function RoomList() {
           increment: option.increment,
         })
         .then((response) => {
-          console.log("Room created:", response.data);
           router.push(`/play-online/${response.data.id}`);
         })
         .catch((error) => {
-          console.error("Error creating room:", error);
+          console.log("Error creating room:", error);
           dispatch(stopLoading());
         });
       setOption({
