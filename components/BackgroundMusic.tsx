@@ -18,7 +18,7 @@ const BackgroundMusic: React.FC<{ currentRoute: string | null }> = ({
         );
         if (isMounted) setSound(newSound);
       } catch (error) {
-        console.error("Failed to load sound:", error);
+        console.log("Failed to load sound:", error);
       }
     };
 
@@ -45,7 +45,7 @@ const BackgroundMusic: React.FC<{ currentRoute: string | null }> = ({
           await sound.pauseAsync();
         }
       } catch (error) {
-        console.error("Error managing music:", error);
+        console.log("Error managing music:", error);
       }
     };
 

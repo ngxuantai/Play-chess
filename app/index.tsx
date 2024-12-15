@@ -9,9 +9,8 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
-import { useDispatch } from "react-redux";
-import { setSetting } from "@/redux/slices/settingsSlice";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSelector } from "react-redux";
+import { selectIsAuthenticated } from "@/redux/selectors/authSelectors";
 import { Colors } from "@/constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -19,25 +18,7 @@ const { width } = Dimensions.get("window");
 
 export default function index() {
   const router = useRouter();
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settings = await AsyncStorage.getItem("settings");
-        let parsedSettings;
-        if (settings !== null) {
-          parsedSettings = JSON.parse(settings);
-          Object.entries(parsedSettings).forEach(([key, value]) => {
-            dispatch(setSetting({ key, value }));
-          });
-        }
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      }
-    };
-    loadSettings();
-  }, []);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   return (
     <LinearGradient
@@ -64,7 +45,18 @@ export default function index() {
         <GameButton
           icon="web"
           text="Chơi Trực tuyến"
-          onPress={() => router.push("/room-list")}
+          onPress={() => {
+            if (isAuthenticated) {
+              router.push("/room-list");
+            } else {
+              router.push({
+                pathname: "/login",
+                params: {
+                  redirectTo: "/room-list",
+                },
+              });
+            }
+          }}
         />
         <GameButton
           icon="robot"

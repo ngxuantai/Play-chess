@@ -11,7 +11,7 @@ import {
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { Divider } from "react-native-paper";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,6 +37,7 @@ const LoginSchema = Yup.object().shape({
 
 export default function Login() {
   const router = useRouter();
+  const { redirectTo } = useLocalSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, isAuthenticated } = useSelector(selectAuth);
 
@@ -54,6 +55,14 @@ export default function Login() {
       })
     );
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (redirectTo) {
+        router.replace(redirectTo);
+      } else router.dismissAll();
+    }
+  }, [isAuthenticated]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -74,7 +83,6 @@ export default function Login() {
           values,
           errors,
           touched,
-          resetForm,
         }) => (
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>
@@ -162,7 +170,14 @@ export default function Login() {
         Chưa có tài khoản?{" "}
         <Text
           style={styles.link}
-          onPress={() => router.push("/register")}
+          onPress={() =>
+            router.push({
+              pathname: "/register",
+              params: {
+                redirectTo: redirectTo,
+              },
+            })
+          }
         >
           Đăng ký
         </Text>

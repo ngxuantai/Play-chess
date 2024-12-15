@@ -2,13 +2,14 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   loginAction,
   registerAction,
+  getProfileAction,
   logoutAction,
 } from "../actions/authActions";
 import { AuthState } from "@/types";
 
 const initialState: AuthState = {
   isAuthenticated: false,
-  user: null,
+  user: {},
   access_token: null,
   loading: false,
   error: null,
@@ -18,6 +19,9 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    setToken: (state, action) => {
+      state.access_token = action.payload;
+    },
     clearError: (state) => {
       state.error = null;
     },
@@ -61,6 +65,24 @@ const authSlice = createSlice({
       state.error = action.payload as string;
     });
 
+    // Get Profile Reducers
+    builder.addCase(getProfileAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(getProfileAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.access_token = action.payload.token;
+      state.user = action.payload.user;
+    });
+    builder.addCase(getProfileAction.rejected, (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.error = action.payload as string;
+    });
+
     // Logout Reducers
     builder.addCase(logoutAction.fulfilled, (state) => {
       state.isAuthenticated = false;
@@ -71,5 +93,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { setToken, clearError } = authSlice.actions;
 export default authSlice.reducer;

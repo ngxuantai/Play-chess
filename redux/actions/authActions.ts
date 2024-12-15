@@ -9,10 +9,17 @@ export const loginAction = createAsyncThunk(
     try {
       const response = await authApi.login(credentials);
 
-      await AsyncStorage.setItem("userToken", response.data.access_token);
+      await AsyncStorage.setItem("access_token", response.data.access_token);
+
+      const userResponce = await authApi.getProfile();
 
       return {
-        user: response.data.user,
+        user: {
+          id: userResponce.data.id,
+          username: userResponce.data.username,
+          email: userResponce.data.email,
+          rating: userResponce.data.rating,
+        },
         access_token: response.data.access_token,
       };
     } catch (error: any) {
@@ -30,17 +37,42 @@ export const registerAction = createAsyncThunk(
     try {
       const response = await authApi.register(credentials);
 
-      await AsyncStorage.setItem("userToken", response.data.access_token);
+      await AsyncStorage.setItem("access_token", response.data.access_token);
+
+      const userResponce = await authApi.getProfile();
 
       return {
-        user: response.data.user,
+        user: {
+          id: userResponce.data.id,
+          username: userResponce.data.username,
+          email: userResponce.data.email,
+          rating: userResponce.data.rating,
+        },
         access_token: response.data.access_token,
       };
     } catch (error: any) {
-      return rejectWithValue(
-        // error.message ||
-        "Đăng ký thất bại"
-      );
+      return rejectWithValue(error.message || "Đăng ký thất bại");
+    }
+  }
+);
+
+export const getProfileAction = createAsyncThunk(
+  "auth/profile",
+  async (token: string, { rejectWithValue }) => {
+    try {
+      const response = await authApi.getProfile();
+
+      return {
+        token: token,
+        user: {
+          id: response.data.id,
+          username: response.data.username,
+          email: response.data.email,
+          rating: response.data.rating,
+        },
+      };
+    } catch (error: any) {
+      return rejectWithValue("Lỗi lấy thông tin người dùng");
     }
   }
 );
@@ -50,7 +82,7 @@ export const logoutAction = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("access_token");
 
       return null;
     } catch (error) {

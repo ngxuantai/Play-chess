@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   View,
@@ -9,9 +9,14 @@ import {
   Button,
 } from "react-native";
 import RoomCard from "@/components/RoomCard";
+import TimePickerModal from "@/components/TimePickerModal";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
+import { gameApi } from "@/api/game.api";
+import { useDispatch, useSelector } from "react-redux";
+import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
+import { OptionCreateRoom } from "@/types";
 
 const avatarUrl = [
   require("@/assets/chess/bb.png"),
@@ -30,6 +35,13 @@ const avatarUrl = [
 
 export default function RoomList() {
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  const [option, setOption] = useState<OptionCreateRoom>({
+    timeControl: 0,
+    increment: 0,
+  });
+  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [rooms, setRooms] = useState(() =>
     [
@@ -89,6 +101,10 @@ export default function RoomList() {
 
   const [filteredRooms, setFilteredRooms] = useState(rooms);
 
+  const handleCreateRoom = () => {
+    setIsTimePickerVisible(true);
+  };
+
   const handleJoinRoom = (roomId: string) => {
     router.push(`/play-online/${roomId}`);
   };
@@ -102,8 +118,40 @@ export default function RoomList() {
     setFilteredRooms(filtered);
   };
 
+  useEffect(() => {
+    if (option.timeControl !== 0) {
+      setIsTimePickerVisible(false);
+      dispatch(startLoading("Đang tạo phòng..."));
+      gameApi
+        .createGame({
+          timeControl: option.timeControl,
+          increment: option.increment,
+        })
+        .then((response) => {
+          router.push(`/play-online/${response.data.id}`);
+        })
+        .catch((error) => {
+          console.log("Error creating room:", error);
+          dispatch(stopLoading());
+        });
+      setOption({
+        timeControl: 0,
+        increment: 0,
+      });
+    }
+  }, [option]);
+
   return (
     <View style={styles.container}>
+      <TimePickerModal
+        visible={isTimePickerVisible}
+        onSelect={(option: OptionCreateRoom) => {
+          setOption(option);
+        }}
+        onCancel={() => {
+          setIsTimePickerVisible(false);
+        }}
+      />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon
@@ -115,7 +163,10 @@ export default function RoomList() {
         <Text style={{ fontWeight: "bold", fontSize: 24 }}>
           Danh sách phòng
         </Text>
-        <TouchableOpacity style={styles.createRoomButton}>
+        <TouchableOpacity
+          style={styles.createRoomButton}
+          onPress={handleCreateRoom}
+        >
           <Icon
             name="plus"
             size={24}
