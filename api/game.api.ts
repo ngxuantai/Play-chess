@@ -11,4 +11,14 @@ export const gameApi = {
       throw error.response.data;
     }
   },
+
+  getListGames: async () => {
+    try {
+      const response = await axiosInstance.get("/games");
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
+  },
 };

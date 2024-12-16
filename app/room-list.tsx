@@ -6,7 +6,7 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Button,
+  RefreshControl,
 } from "react-native";
 import RoomCard from "@/components/RoomCard";
 import TimePickerModal from "@/components/TimePickerModal";
@@ -14,7 +14,7 @@ import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import { gameApi } from "@/api/game.api";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
 import { OptionCreateRoom } from "@/types";
 
@@ -42,80 +42,50 @@ export default function RoomList() {
     increment: 0,
   });
   const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
+  const [rooms, setRooms] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [rooms, setRooms] = useState(() =>
-    [
-      {
-        ownerName: "John Doe",
-        roomId: "12345",
-      },
-      {
-        ownerName: "Jane Smith",
-        roomId: "67890",
-      },
-      {
-        ownerName: "Alice Wonderland",
-        roomId: "54321",
-      },
-      {
-        ownerName: "Bob Builder",
-        roomId: "98765",
-      },
-      {
-        ownerName: "Charlie Brown",
-        roomId: "11223",
-      },
-      {
-        ownerName: "Diana Prince",
-        roomId: "44556",
-      },
-      {
-        ownerName: "Eve Adams",
-        roomId: "77889",
-      },
-      {
-        ownerName: "Frank Castle",
-        roomId: "99001",
-      },
-      {
-        ownerName: "Grace Hopper",
-        roomId: "22334",
-      },
-      {
-        ownerName: "Hank Pym",
-        roomId: "55667",
-      },
-      {
-        ownerName: "Ivy League",
-        roomId: "88900",
-      },
-      {
-        ownerName: "Jack Ryan",
-        roomId: "33445",
-      },
-    ].map((room) => ({
-      ...room,
-      avatar: avatarUrl[Math.floor(Math.random() * avatarUrl.length)],
-    }))
-  );
+  const [filteredRooms, setFilteredRooms] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [filteredRooms, setFilteredRooms] = useState(rooms);
+  const fetchRooms = async () => {
+    const response = await gameApi.getListGames();
+    const roomData = response.data.map((room: any) => ({
+      roomId: room.id,
+      ownerName: room.creator.username,
+      rating: room.creator.rating,
+      timeControl: room.timeControl,
+      increment: room.increment,
+      avatar: avatarUrl[room.id % avatarUrl.length],
+    }));
+    setRooms(roomData);
+    setFilteredRooms(roomData);
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchRooms();
+    setSearchText("");
+    setIsRefreshing(false);
+  };
 
   const handleCreateRoom = () => {
     setIsTimePickerVisible(true);
   };
 
-  const handleJoinRoom = (roomId: string) => {
-    router.push(`/play-online/${roomId}`);
-  };
-
   const handleSearch = () => {
-    const filtered = rooms.filter(
-      (room) =>
-        room.ownerName.toLowerCase().includes(searchText.toLowerCase()) ||
-        room.roomId.includes(searchText)
+    const filtered = rooms.filter((room: any) =>
+      String(room.roomId).includes(searchText)
     );
     setFilteredRooms(filtered);
+  };
+
+  const handleJoinRoom = (roomId: string) => {
+    dispatch(startLoading("Đang tham gia phòng..."));
+    router.push(`/play-online/${roomId}`);
   };
 
   useEffect(() => {
@@ -180,6 +150,7 @@ export default function RoomList() {
           placeholder="Tìm kiếm phòng theo ID..."
           value={searchText}
           onChangeText={(text) => setSearchText(text)}
+          keyboardType="number-pad"
         />
         <TouchableOpacity
           style={styles.searchButton}
@@ -193,16 +164,27 @@ export default function RoomList() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView>
-        {filteredRooms.map((room, index) => (
-          <RoomCard
-            key={index}
-            ownerName={room.ownerName}
-            roomId={room.roomId}
-            onJoinRoom={() => handleJoinRoom(room.roomId)}
-            avatar={room.avatar}
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
           />
-        ))}
+        }
+      >
+        {rooms.length === 0 ? (
+          <Text style={{ textAlign: "center", marginTop: 16, fontSize: 16 }}>
+            Không có phòng nào
+          </Text>
+        ) : (
+          filteredRooms.map((room: any, index: number) => (
+            <RoomCard
+              key={index}
+              roomInfo={room}
+              onJoinRoom={() => handleJoinRoom(room.roomId)}
+            />
+          ))
+        )}
       </ScrollView>
     </View>
   );
