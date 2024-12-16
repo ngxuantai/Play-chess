@@ -73,24 +73,14 @@ export default function PlayOnline() {
     useState<boolean>(false);
   const [showChessResultModal, setShowChessResultModal] =
     useState<boolean>(false);
-  const [additionalTime, setAdditionalTime] = useState<number | null>(null);
   const [isChatVisible, setChatVisible] = useState<boolean>(false);
   const [chatBubble, setChatBubble] = useState<{
-    player: string;
+    playerId: number;
     message: string;
   } | null>(null);
   const [chatHistory, setChatHistory] = useState<
-    { player: string; message: string }[]
+    { playerId: number; message: string }[]
   >([]);
-
-  const handleTimeSelection = (
-    selectedTime: number,
-    additionalTime?: number
-  ) => {
-    setWhiteTime(selectedTime);
-    setBlackTime(selectedTime);
-    setAdditionalTime(additionalTime || null);
-  };
 
   useEffect(() => {
     socketService.connect(token);
@@ -149,6 +139,22 @@ export default function PlayOnline() {
 
     socketService.on("drawDeclined", (data) => {
       console.log("Draw declined:", data);
+    });
+
+    socketService.on("chatMessage", (data) => {
+      if (data.senderId) {
+        setChatBubble({
+          playerId: data.senderId,
+          message: data.message,
+        });
+        setChatHistory((prev) => [
+          ...prev,
+          { playerId: data.senderId, message: data.message },
+        ]);
+        setTimeout(() => {
+          setChatBubble(null);
+        }, 5000);
+      }
     });
 
     return () => {
@@ -213,18 +219,6 @@ export default function PlayOnline() {
     );
   }, [state.board, side, chess, state.player]);
 
-  const handleMessageSend = (message: string) => {
-    if (message.trim() === "") return;
-
-    setChatBubble({ player: state.player, message });
-    setChatHistory((prev) => [...prev, { player: state.player, message }]);
-    setChatVisible(false);
-
-    setTimeout(() => {
-      setChatBubble(null);
-    }, 5000);
-  };
-
   useEffect(() => {
     if (state.board.length !== 0) {
       dispatch(stopLoading());
@@ -277,13 +271,19 @@ export default function PlayOnline() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* <SidePickerModal onSelectSide={setSide} /> */}
-      <ChatModal
-        visible={isChatVisible}
-        setVisble={setChatVisible}
-        chatHistory={chatHistory}
-        onMessageSend={handleMessageSend}
-      />
+      <View>
+        <ChatModal
+          visible={isChatVisible}
+          setVisble={setChatVisible}
+          chatHistory={chatHistory}
+          onMessageSend={(message) => {
+            socketService.emit("chatMessage", {
+              gameId: Number(id),
+              message: message,
+            });
+          }}
+        />
+      </View>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon
@@ -386,13 +386,14 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
-        {chatBubble !== null && chatBubble?.player !== side && (
+        {chatBubble !== null && chatBubble?.playerId !== user?.id && (
           <View style={styles.chatBubble}>
             <ChatBubble
               isOwnMessage={false}
               bubbleColor={Colors.GREY}
               tailColor={Colors.GREY}
               withTail={true}
+              zIndex={1000}
             >
               <Text
                 style={[
@@ -407,7 +408,6 @@ export default function PlayOnline() {
             </ChatBubble>
           </View>
         )}
-        <Text style={styles.playerText}>Player 1</Text>
         <Text style={styles.playerText}>
           {activeBoard === "waiting"
             ? "Đang chờ đối thủ..."
@@ -451,13 +451,14 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
-        {chatBubble !== null && chatBubble?.player !== side && (
+        {chatBubble !== null && chatBubble?.playerId === user?.id && (
           <View style={styles.chatBubble}>
             <ChatBubble
               isOwnMessage={false}
               bubbleColor={Colors.BLUE}
               tailColor={Colors.BLUE}
               withTail={true}
+              zIndex={1000}
             >
               <Text
                 style={[
@@ -472,7 +473,7 @@ export default function PlayOnline() {
             </ChatBubble>
           </View>
         )}
-        <Text style={styles.playerText}>Player 2</Text>
+        <Text style={styles.playerText}>{user?.username}</Text>
         <View style={styles.timer}>
           <Icon
             name="clock-outline"

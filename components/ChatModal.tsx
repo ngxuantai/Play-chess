@@ -1,6 +1,5 @@
 import { Colors } from "@/constants/Colors";
-import { current } from "@reduxjs/toolkit";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,9 +8,10 @@ import {
   StyleSheet,
   FlatList,
   TextInput,
-  TouchableNativeFeedback,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useSelector } from "react-redux";
+import { selectUser } from "@/redux/selectors/authSelectors";
 
 const emojis = [
   "😀",
@@ -52,17 +52,17 @@ const quickMessages = [
   "Thanks",
   "Sorry",
   "Good move",
+  "Gotta go",
   "Oops",
   "Interesting",
   "Good game",
-  "Gotta go",
   "Bye",
 ];
 
 interface ChatModalProps {
   visible: boolean;
   setVisble: (visible: boolean) => void;
-  chatHistory: { player: string; message: string }[];
+  chatHistory: { playerId: number; message: string }[];
   onMessageSend: (message: string) => void;
 }
 
@@ -72,10 +72,13 @@ const ChatModal: React.FC<ChatModalProps> = ({
   chatHistory,
   onMessageSend,
 }) => {
+  const user = useSelector(selectUser);
+
   const [message, setMessage] = useState<string>("");
   const [currentTab, setCurrentTab] = useState<"history" | "quickMessage">(
     "history"
   );
+  const listRef = useRef(null);
 
   const onClose = () => {
     setVisble(false);
@@ -118,22 +121,33 @@ const ChatModal: React.FC<ChatModalProps> = ({
           </View>
 
           {currentTab === "history" ? (
-            <FlatList
-              data={chatHistory}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.messageBubble,
-                    item.player === "w"
-                      ? styles.whiteBubble
-                      : styles.blackBubble,
-                  ]}
-                >
-                  <Text style={styles.messageText}>{item.message}</Text>
-                </View>
-              )}
-            />
+            <View style={{ height: 300, width: "100%" }}>
+              <FlatList
+                data={chatHistory}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      item.playerId === user?.id
+                        ? styles.sideBubble
+                        : styles.oppositeBubble,
+                    ]}
+                  >
+                    <Text
+                      style={
+                        item.playerId === user?.id
+                          ? styles.sideText
+                          : styles.oppositeText
+                      }
+                    >
+                      {item.message}
+                    </Text>
+                  </View>
+                )}
+                contentContainerStyle={[styles.historyContainer]}
+              />
+            </View>
           ) : (
             <>
               <FlatList
@@ -168,7 +182,13 @@ const ChatModal: React.FC<ChatModalProps> = ({
             </>
           )}
           <View style={styles.messageContainer}>
-            <TouchableOpacity onPress={() => setCurrentTab("quickMessage")}>
+            <TouchableOpacity
+              onPress={() =>
+                setCurrentTab((prev) =>
+                  prev === "history" ? "quickMessage" : "history"
+                )
+              }
+            >
               <Icon
                 name="lightning-bolt"
                 size={26}
@@ -228,31 +248,33 @@ const styles = StyleSheet.create({
     borderColor: "gray",
   },
   historyContainer: {
-    marginVertical: 10,
-    width: "100%",
-  },
-  historyMessage: {
-    fontSize: 16,
+    paddingHorizontal: 10,
     paddingVertical: 5,
-    borderBottomWidth: 1,
-    borderColor: "gray",
+    width: "100%",
   },
   messageBubble: {
     marginVertical: 5,
-    padding: 10,
     borderRadius: 10,
     maxWidth: "80%",
   },
-  whiteBubble: {
-    alignSelf: "flex-start",
-    backgroundColor: "#e0e0e0",
-  },
-  blackBubble: {
+  sideBubble: {
     alignSelf: "flex-end",
-    backgroundColor: "#0078FF",
   },
-  messageText: {
+  sideText: {
+    width: "auto",
     color: "white",
+    backgroundColor: "#0078FF",
+    padding: 8,
+    borderRadius: 10,
+  },
+  oppositeBubble: {
+    alignSelf: "flex-start",
+  },
+  oppositeText: {
+    color: "black",
+    backgroundColor: "#e0e0e0",
+    padding: 8,
+    borderRadius: 10,
   },
   title: {
     fontSize: 20,
@@ -260,18 +282,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emojiContainer: {
-    marginVertical: 10,
+    marginVertical: 8,
   },
   emojiButton: {
-    padding: 5,
+    padding: 4,
     alignItems: "center",
     justifyContent: "center",
   },
   emojiText: {
-    fontSize: 24,
+    fontSize: 22,
   },
   quickMessageContainer: {
-    marginVertical: 10,
+    marginVertical: 8,
   },
   quickMessageButton: {
     backgroundColor: Colors.LIGHTBLUE,
