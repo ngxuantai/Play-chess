@@ -2,42 +2,66 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { formatMinsToHour } from "@/utils/dateTimeFormat";
 
 type RoomCardProps = {
-  ownerName: string;
-  roomId: string;
-  avatar: any;
+  roomInfo: {
+    roomId: string;
+    ownerName: string;
+    rating: number;
+    timeControl: number;
+    increment: number;
+    avatar: any;
+  };
   onJoinRoom: () => void;
 };
 
-const RoomCard = ({ ownerName, roomId, avatar, onJoinRoom }: RoomCardProps) => {
+const RoomCard = ({ roomInfo, onJoinRoom }: RoomCardProps) => {
   return (
     <View style={styles.card}>
       <Image
-        source={avatar}
+        source={roomInfo.avatar}
         style={styles.avatar}
       />
-
       <View style={styles.info}>
+        <Text style={styles.roomId}>ID: {roomInfo.roomId}</Text>
         <Text
-          style={styles.ownerName}
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: Colors.BLACK,
+          }}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
-          {ownerName}
+          {roomInfo.ownerName}
         </Text>
-        <Text style={styles.roomId}>ID: {roomId}</Text>
-
-        <Text>
+        <Text style={styles.infoText}>
           <Icon
-            name="account"
-            size={16}
+            name="clock"
+            size={18}
             color={Colors.BLACK}
           />
-          <Text style={styles.memNumber}> 1/2</Text>
+          : {roomInfo.timeControl + " phút"}
+          {roomInfo.increment > 0 && " + " + roomInfo.increment + "s/di chuyển"}
         </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
+          <Text style={[styles.infoText, { width: 50 }]}>
+            <Icon
+              name="account"
+              size={18}
+              color={Colors.BLACK}
+            />
+            : 1/2
+          </Text>
+        </View>
       </View>
-
       <TouchableOpacity
         onPress={onJoinRoom}
         style={styles.button}
@@ -47,7 +71,6 @@ const RoomCard = ({ ownerName, roomId, avatar, onJoinRoom }: RoomCardProps) => {
           size={24}
           color={Colors.LIGHTBLUE}
         />
-        <Text style={styles.buttonText}>Vào phòng</Text>
       </TouchableOpacity>
     </View>
   );
@@ -67,37 +90,30 @@ const styles = StyleSheet.create({
   avatar: {
     width: 80,
     height: 80,
-    borderRadius: 25,
-    marginRight: 10,
   },
   info: {
     flex: 1,
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    gap: 2,
   },
-  ownerName: {
+  roomId: {
     color: Colors.BLACK,
     fontSize: 16,
     fontWeight: "bold",
   },
-  roomId: {
-    color: Colors.BLACK,
-    fontSize: 14,
-  },
-  memNumber: {
+  infoText: {
     color: Colors.BLACK,
     fontSize: 14,
   },
   button: {
-    display: "flex",
-    flexDirection: "row",
-    borderRadius: 20,
-    overflow: "hidden",
+    borderRadius: "100%",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: Colors.DARKBLUE,
-    padding: 10,
-  },
-  buttonText: {
-    color: Colors.LIGHTBLUE,
-    fontWeight: "bold",
-    fontSize: 14,
+    padding: 8,
+    elevation: 10,
   },
 });
 

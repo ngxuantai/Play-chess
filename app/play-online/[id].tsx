@@ -74,52 +74,57 @@ export default function PlayOnline() {
     socketService.connect(token);
     socketService.emit("joinGame", { gameId: Number(id) });
 
+    socketService.on("gameState", (data) => {
+      setActiveBoard((prev) => (prev === data.status ? prev : data.status));
+
+      setPlayers((prevPlayers) => {
+        if (prevPlayers.white.id === null || prevPlayers.black.id === null) {
+          const isWhite = data.whitePlayerId === user?.id;
+          setSide(isWhite ? "w" : "b");
+
+          return {
+            white: {
+              id: data.whitePlayerId,
+              username: isWhite ? user?.username : prevPlayers.white.username,
+            },
+            black: {
+              id: data.blackPlayerId,
+              username: !isWhite ? user?.username : prevPlayers.black.username,
+            },
+          };
+        }
+        return prevPlayers;
+      });
+
+      chess.load(data.fen);
+      setState({
+        player: data.turn,
+        board: chess.board(),
+      });
+      setWhiteTime(data.whiteTimeRemaining);
+      setBlackTime(data.blackTimeRemaining);
+      if (data.lastMoveResult)
+        setMoveHistory((prev) => [...prev, data.lastMoveResult]);
+    });
+
+    socketService.on("gameOver", (data) => {
+      if (data.winner === null) {
+        setResult("draw");
+      } else if (data.winner === user?.id) {
+        setResult("win");
+      } else {
+        setResult("lose");
+      }
+      setShowChessResultModal(true);
+
+      setWhiteTime(data.whiteTimeRemaining);
+      setBlackTime(data.blackTimeRemaining);
+    });
+
     return () => {
       socketService.disconnect();
     };
   }, [token, id]);
-
-  useSocketEvent("gameState", (data) => {
-    setActiveBoard((prev) => (prev === data.status ? prev : data.status));
-
-    setPlayers((prevPlayers) => {
-      if (prevPlayers.white.id === null || prevPlayers.black.id === null) {
-        const isWhite = data.whitePlayerId === user?.id;
-        setSide(isWhite ? "w" : "b");
-
-        return {
-          white: {
-            id: data.whitePlayerId,
-            username: isWhite ? user?.username : prevPlayers.white.username,
-          },
-          black: {
-            id: data.blackPlayerId,
-            username: !isWhite ? user?.username : prevPlayers.black.username,
-          },
-        };
-      }
-      return prevPlayers;
-    });
-
-    chess.load(data.fen);
-    setState({
-      player: data.turn,
-      board: chess.board(),
-    });
-    setWhiteTime(data.whiteTimeRemaining);
-    setBlackTime(data.blackTimeRemaining);
-  });
-
-  useSocketEvent("gameOver", (data) => {
-    if (data.winner === null) {
-      setResult("draw");
-    } else if (data.winner === user?.id) {
-      setResult("win");
-    } else {
-      setResult("lose");
-    }
-    setShowChessResultModal(true);
-  });
 
   const handleTimer = useCallback(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -183,6 +188,10 @@ export default function PlayOnline() {
       dispatch(stopLoading());
     }
   }, [state.board]);
+
+  useEffect(() => {
+    console.log("Players:", players);
+  }, [players]);
 
   useEffect(() => {
     const fetchPlayerInfo = async (
@@ -301,7 +310,9 @@ export default function PlayOnline() {
         <Text style={styles.playerText}>
           {activeBoard === "waiting"
             ? "Đang chờ đối thủ..."
-            : players.black.username}
+            : side === "w"
+            ? players.black.username
+            : players.white.username}
         </Text>
         <View style={styles.timer}>
           <Icon
