@@ -19,7 +19,6 @@ import GlobalLoading from "@/components/GlobalLoading";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
 import { useConst } from "@/hooks/useConst";
-import { useSocketEvent } from "@/hooks/useSocketEvent";
 import { SIZE } from "@/utils/chessUtils";
 import { timerFormat } from "@/utils/dateTimeFormat";
 import { Colors } from "@/constants/Colors";
@@ -67,6 +66,9 @@ export default function PlayOnline() {
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const [showResignDialog, setShowResignDialog] = useState<boolean>(false);
+  const [showDrawDialog, setShowDrawDialog] = useState<boolean>(false);
+  const [showConfirmDrawDialog, setShowConfirmDrawDialog] =
+    useState<boolean>(false);
   const [showChessResultModal, setShowChessResultModal] =
     useState<boolean>(false);
 
@@ -116,9 +118,17 @@ export default function PlayOnline() {
         setResult("lose");
       }
       setShowChessResultModal(true);
+    });
 
-      setWhiteTime(data.whiteTimeRemaining);
-      setBlackTime(data.blackTimeRemaining);
+    socketService.on("drawOffered", (data) => {
+      console.log("Draw offered:", data);
+      if (data.offeredBy !== user?.id) {
+        setShowConfirmDrawDialog(true);
+      }
+    });
+
+    socketService.on("drawDeclined", (data) => {
+      console.log("Draw declined:", data);
     });
 
     return () => {
@@ -190,10 +200,6 @@ export default function PlayOnline() {
   }, [state.board]);
 
   useEffect(() => {
-    console.log("Players:", players);
-  }, [players]);
-
-  useEffect(() => {
     const fetchPlayerInfo = async (
       playerId: string,
       side: "white" | "black"
@@ -223,6 +229,12 @@ export default function PlayOnline() {
       fetchData();
     }
   }, [activeBoard, side, players.black.id, players.white.id]);
+
+  const handleCloseDialog = useCallback(() => {
+    setShowResignDialog(false);
+    setShowDrawDialog(false);
+    setShowConfirmDrawDialog(false);
+  }, []);
 
   if (isLoading)
     return (
@@ -256,7 +268,10 @@ export default function PlayOnline() {
             <MoveHistory moveHistory={moveHistory} />
           )}
         </View>
-        <TouchableOpacity style={styles.refreshButton}>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={() => setShowDrawDialog(true)}
+        >
           <Icon
             name="handshake"
             size={24}
@@ -274,13 +289,31 @@ export default function PlayOnline() {
           />
         </TouchableOpacity>
         <ConfirmationDialog
-          text="Bạn có chắc chắn muốn đầu hàng?"
-          visible={showResignDialog}
+          text={
+            showResignDialog
+              ? "Bạn có chắc chắn muốn đầu hàng?"
+              : showDrawDialog
+              ? "Bạn muốn đề nghị hòa không?"
+              : "Đối thủ muốn hòa, bạn có đồng ý không?"
+          }
+          visible={showResignDialog || showDrawDialog || showConfirmDrawDialog}
           onConfirm={() => {
-            socketService.emit("resign", { gameId: Number(id) });
-            setShowResignDialog(false);
+            if (showResignDialog)
+              socketService.emit("resign", { gameId: Number(id) });
+            else if (showDrawDialog)
+              socketService.emit("offerDraw", { gameId: Number(id) });
+            else if (showConfirmDrawDialog)
+              socketService.emit("respondToDraw", {
+                gameId: Number(id),
+                accept: true,
+              });
+            handleCloseDialog();
           }}
-          onCancel={() => setShowResignDialog(false)}
+          onCancel={() => {
+            if (showConfirmDrawDialog)
+              socketService.emit("offerDraw", { gameId: Number(id) });
+            handleCloseDialog();
+          }}
         />
         <ChessResultModal
           visible={showChessResultModal}
@@ -290,7 +323,14 @@ export default function PlayOnline() {
           opponentName={
             side === "w" ? players.black.username : players.white.username
           }
-          onExit={() => setShowChessResultModal(false)}
+          onExit={() => {
+            setShowChessResultModal(false);
+            router.back();
+          }}
+          // onPlayAgain={() => {
+          //   setShowChessResultModal(false);
+          //   socketService.emit("playAgain", { gameId: Number(id) });
+          // }}
         />
       </View>
       <View
