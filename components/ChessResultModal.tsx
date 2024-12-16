@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors } from "@/constants/Colors";
@@ -33,11 +32,11 @@ const ChessResultModal = ({
   const getResultMessage = () => {
     switch (result) {
       case "win":
-        return "🎉 You Win!";
+        return "🎉 Bạn đã thắng!";
       case "lose":
-        return "😔 You Lose!";
+        return "😔 Bạn đã thua!";
       case "draw":
-        return "🤝 It's a Draw!";
+        return "🤝 Hòa!";
       default:
         return "";
     }
@@ -77,10 +76,18 @@ const ChessResultModal = ({
               <Text
                 style={[
                   styles.infoResult,
-                  result === "win" ? styles.userWin : styles.userLose,
+                  result === "win"
+                    ? styles.userWin
+                    : result === "lose"
+                    ? styles.userLose
+                    : styles.userDraw,
                 ]}
               >
-                {result === "win" ? "Win" : "Lose"}
+                {result === "win"
+                  ? "Thắng"
+                  : result === "lose"
+                  ? "Thua"
+                  : "HòaHòa"}
               </Text>
             </View>
             <Text style={styles.resultText}>vs</Text>
@@ -97,26 +104,43 @@ const ChessResultModal = ({
               <Text
                 style={[
                   styles.infoResult,
-                  result === "lose" ? styles.userWin : styles.userLose,
+                  result === "lose"
+                    ? styles.userWin
+                    : result === "win"
+                    ? styles.userLose
+                    : styles.userDraw,
                 ]}
               >
-                {result === "lose" ? "Win" : "Lose"}
+                {result === "lose"
+                  ? "Thắng"
+                  : result === "win"
+                  ? "Thua"
+                  : "HòaHòa"}
               </Text>
             </View>
           </View>
-          <View style={styles.buttonContainer}>
+          <View
+            style={[
+              styles.buttonContainer,
+              onPlayAgain !== undefined
+                ? { justifyContent: "space-between" }
+                : { justifyContent: "flex-end" },
+            ]}
+          >
             <TouchableOpacity
               style={[styles.button, styles.exitButton]}
               onPress={onExit}
             >
-              <Text style={[styles.buttonText, { color: "red" }]}>Thoát</Text>
+              <Text style={[styles.buttonText, { color: "white" }]}>Thoát</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={onPlayAgain}
-            >
-              <Text style={styles.buttonText}>Chơi lại</Text>
-            </TouchableOpacity>
+            {onPlayAgain !== undefined && (
+              <TouchableOpacity
+                style={styles.button}
+                onPress={onPlayAgain}
+              >
+                <Text style={styles.buttonText}>Chơi lại</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -194,7 +218,10 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
   },
   userLose: {
-    color: "red",
+    color: "#E04622",
+  },
+  userDraw: {
+    color: "gray",
   },
   resultText: {
     fontSize: 24,
@@ -203,12 +230,11 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
   },
   button: {
-    width: "50%",
+    width: "40%",
     backgroundColor: Colors.LIGHTBLUE,
     padding: 12,
     borderRadius: 12,
@@ -216,14 +242,14 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 18,
     color: Colors.BLACK,
     fontWeight: "bold",
     textAlign: "center",
   },
   exitButton: {
-    backgroundColor: undefined,
-    elevation: 0,
+    backgroundColor: "#E04622",
+    elevation: 6,
   },
 });
 
