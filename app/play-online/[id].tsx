@@ -28,6 +28,8 @@ import { selectAccessToken, selectUser } from "@/redux/selectors/authSelectors";
 import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
 import { stopLoading } from "@/redux/slices/loadingSlice";
 import { PlayerInfo } from "@/types";
+import ChatModal from "@/components/ChatModal";
+import ChatBubble from "react-native-chat-bubble";
 
 const { width } = Dimensions.get("window");
 
@@ -71,6 +73,14 @@ export default function PlayOnline() {
     useState<boolean>(false);
   const [showChessResultModal, setShowChessResultModal] =
     useState<boolean>(false);
+  const [isChatVisible, setChatVisible] = useState<boolean>(false);
+  const [chatBubble, setChatBubble] = useState<{
+    playerId: number;
+    message: string;
+  } | null>(null);
+  const [chatHistory, setChatHistory] = useState<
+    { playerId: number; message: string }[]
+  >([]);
 
   useEffect(() => {
     socketService.connect(token);
@@ -129,6 +139,22 @@ export default function PlayOnline() {
 
     socketService.on("drawDeclined", (data) => {
       console.log("Draw declined:", data);
+    });
+
+    socketService.on("chatMessage", (data) => {
+      if (data.senderId) {
+        setChatBubble({
+          playerId: data.senderId,
+          message: data.message,
+        });
+        setChatHistory((prev) => [
+          ...prev,
+          { playerId: data.senderId, message: data.message },
+        ]);
+        setTimeout(() => {
+          setChatBubble(null);
+        }, 5000);
+      }
     });
 
     return () => {
@@ -245,6 +271,19 @@ export default function PlayOnline() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <View>
+        <ChatModal
+          visible={isChatVisible}
+          setVisble={setChatVisible}
+          chatHistory={chatHistory}
+          onMessageSend={(message) => {
+            socketService.emit("chatMessage", {
+              gameId: Number(id),
+              message: message,
+            });
+          }}
+        />
+      </View>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon
@@ -347,6 +386,28 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
+        {chatBubble !== null && chatBubble?.playerId !== user?.id && (
+          <View style={styles.chatBubble}>
+            <ChatBubble
+              isOwnMessage={false}
+              bubbleColor={Colors.GREY}
+              tailColor={Colors.GREY}
+              withTail={true}
+              zIndex={1000}
+            >
+              <Text
+                style={[
+                  styles.chatBubbleText,
+                  {
+                    color: Colors.BLACK,
+                  },
+                ]}
+              >
+                {chatBubble?.message}
+              </Text>
+            </ChatBubble>
+          </View>
+        )}
         <Text style={styles.playerText}>
           {activeBoard === "waiting"
             ? "Đang chờ đối thủ..."
@@ -390,6 +451,28 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
+        {chatBubble !== null && chatBubble?.playerId === user?.id && (
+          <View style={styles.chatBubble}>
+            <ChatBubble
+              isOwnMessage={false}
+              bubbleColor={Colors.BLUE}
+              tailColor={Colors.BLUE}
+              withTail={true}
+              zIndex={1000}
+            >
+              <Text
+                style={[
+                  styles.chatBubbleText,
+                  {
+                    color: "white",
+                  },
+                ]}
+              >
+                {chatBubble?.message}
+              </Text>
+            </ChatBubble>
+          </View>
+        )}
         <Text style={styles.playerText}>{user?.username}</Text>
         <View style={styles.timer}>
           <Icon
@@ -403,7 +486,10 @@ export default function PlayOnline() {
         </View>
       </View>
       <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <TouchableOpacity style={styles.messageButton}>
+        <TouchableOpacity
+          style={styles.messageButton}
+          onPress={() => setChatVisible(true)}
+        >
           <Icon
             name="chat-processing"
             size={24}
@@ -483,5 +569,14 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     width: 45,
+  },
+  chatBubble: {
+    position: "absolute",
+    top: -40,
+    left: 50,
+  },
+  chatBubbleText: {
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
