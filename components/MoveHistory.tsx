@@ -1,32 +1,32 @@
-import React, {useEffect, useMemo, useRef} from "react";
-import {Text, StyleSheet, ScrollView, View, Image} from "react-native";
-import {Colors} from "@/constants/Colors";
-import {Move} from "chess.js";
+import React, { useEffect, useMemo, useRef } from "react";
+import { Text, StyleSheet, ScrollView, View, Image } from "react-native";
+import { Colors } from "@/constants/Colors";
+import { Move } from "chess.js";
 
-const pieceIcons: {[key: string]: {w: any; b: any}} = {
+const pieceIcons: { [key: string]: { w: any; b: any } } = {
   k: {
-    w: require("@/assets/icons/chess-king-w.png"),
-    b: require("@/assets/icons/chess-king-b.png"),
+    w: require("@/assets/chess/wk.png"),
+    b: require("@/assets/chess/bk.png"),
   },
   q: {
-    w: require("@/assets/icons/chess-queen-w.png"),
-    b: require("@/assets/icons/chess-queen-b.png"),
+    w: require("@/assets/chess/wq.png"),
+    b: require("@/assets/chess/bq.png"),
   },
   r: {
-    w: require("@/assets/icons/chess-rook-w.png"),
-    b: require("@/assets/icons/chess-rook-b.png"),
+    w: require("@/assets/chess/wr.png"),
+    b: require("@/assets/chess/br.png"),
   },
   b: {
-    w: require("@/assets/icons/chess-bishop-w.png"),
-    b: require("@/assets/icons/chess-bishop-b.png"),
+    w: require("@/assets/chess/wb.png"),
+    b: require("@/assets/chess/bb.png"),
   },
   n: {
-    w: require("@/assets/icons/chess-knight-w.png"),
-    b: require("@/assets/icons/chess-knight-b.png"),
+    w: require("@/assets/chess/wn.png"),
+    b: require("@/assets/chess/bn.png"),
   },
 };
 
-const MoveHistory = ({moveHistory}: {moveHistory: Move[]}) => {
+const MoveHistory = ({ moveHistory }: { moveHistory: Move[] }) => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const formattedMoves = useMemo(() => {
@@ -39,7 +39,7 @@ const MoveHistory = ({moveHistory}: {moveHistory: Move[]}) => {
 
   useEffect(() => {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({animated: true});
+      scrollViewRef.current.scrollToEnd({ animated: true });
     }
   }, [moveHistory]);
 

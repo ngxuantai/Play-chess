@@ -14,15 +14,13 @@ import React, {
   useRef,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
+import { stopLoading } from "@/redux/slices/loadingSlice";
 import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GlobalLoading from "@/components/GlobalLoading";
-import MoveHistory from "@/components/MoveHistory";
 import UndoModal from "@/components/UndoModal";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
-import ChessResultModal from "@/components/ChessResultModal";
 import { useConst } from "@/hooks/useConst";
 import { Chess, Move } from "chess.js";
 import { SIZE, toTranslation } from "@/utils/chessUtils";
@@ -31,6 +29,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors } from "@/constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePlaySound } from "@/hooks/usePlaySound";
+import { timerFormat } from "@/utils/dateTimeFormat";
 
 const { width } = Dimensions.get("window");
 
@@ -51,7 +50,9 @@ export default function PlayPuzzles() {
     board: [] as (Piece | null)[][],
   });
   const [moveIndex, setMoveIndex] = useState(0);
+  const [time, setTime] = useState(0);
   const [isMoveCorrect, setIsMoveCorrect] = useState(true);
+  const [showHint, setShowHint] = useState(false);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -74,7 +75,27 @@ export default function PlayPuzzles() {
     };
 
     startAnimation();
-  }, [scaleAnim]);
+  }, [scaleAnim, state.player]);
+
+  const handleTimer = useCallback(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    const updateTimer = () => {
+      if (state.player === side) {
+        setTime((prev) => Math.max(prev + 1, 0));
+      }
+    };
+    timer = setInterval(updateTimer, 1000);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [side, state.player]);
+
+  useEffect(() => {
+    const cleanup = handleTimer();
+    return cleanup;
+  }, [handleTimer]);
 
   useEffect(() => {
     chess.load(fen);
@@ -87,12 +108,9 @@ export default function PlayPuzzles() {
 
   const onTurn = useCallback(
     (move: Move) => {
-      console.log("moveIndex", moves[moveIndex]);
-      console.log("move", move.lan);
       if (move.lan !== moves[moveIndex]) {
         setIsMoveCorrect(false);
       } else {
-        console.log("move", move);
         setIsMoveCorrect(true);
         setMoveIndex((prev) => prev + 1);
       }
@@ -102,6 +120,7 @@ export default function PlayPuzzles() {
         player: chess.turn(),
         board: chess.board(),
       });
+      setShowHint(false);
     },
     [chess, state.player]
   );
@@ -140,30 +159,52 @@ export default function PlayPuzzles() {
     setIsMoveCorrect(true);
   }, [chess]);
 
-  useEffect(() => {
-    if (state.board.length > 0 && state.player !== side && isMoveCorrect) {
+  const handleMove = useCallback(() => {
+    if (
+      state.board.length > 0 &&
+      state.player !== side &&
+      isMoveCorrect &&
+      moveIndex < moves.length
+    ) {
       dispatch(stopLoading());
-      console.log("state.board", state.board);
-      console.log("state.player", state.player);
-      setTimeout(() => {
-        console.log("state.board", chess.move(moves[moveIndex]));
+      const timerId = setTimeout(() => {
+        chess.move(moves[moveIndex]);
         setState({
           player: chess.turn(),
           board: chess.board(),
         });
         setMoveIndex((prev) => prev + 1);
       }, 2000);
+      return timerId;
     }
-  }, [state.board, state.player, isMoveCorrect]);
+  }, [state.board, state.player, isMoveCorrect, moveIndex]);
+
+  const handleMoveHint = useCallback(() => {
+    if (moveIndex < moves.length) {
+      chess.move(moves[moveIndex]);
+      setState({
+        player: chess.turn(),
+        board: chess.board(),
+      });
+      setMoveIndex((prev) => prev + 1);
+      setShowHint(false);
+    }
+  }, [moveIndex]);
+
+  useEffect(() => {
+    const timerId = handleMove();
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [handleMove]);
 
   const circlePosition = useMemo(() => {
     if (moveIndex >= moves.length) return { x: 0, y: 0 };
     const from = moves[moveIndex].slice(0, 2);
-    console.log("from", from);
     const { x, y } = toTranslation(from, side !== "" && side === "b");
-    console.log("x, y", x, y);
     return { x, y };
   }, [moveIndex]);
+
   if (isLoading)
     return (
       <View
@@ -196,49 +237,89 @@ export default function PlayPuzzles() {
         <View style={styles.boardContainer}>
           <View style={[styles.board, { position: "relative" }]}>
             <Background flip={side !== "" && side === "b"} />
+            {showHint && (
+              <View
+                style={{
+                  position: "absolute",
+                  width: SIZE,
+                  height: SIZE,
+                  borderRadius: SIZE / 2,
+                  borderColor: "#5EFF1E",
+                  borderWidth: 4,
+                  transform: [
+                    { translateX: circlePosition.x },
+                    { translateY: circlePosition.y },
+                  ],
+                }}
+              />
+            )}
             {side !== "" && renderBoard}
-            <View
-              style={{
-                position: "absolute",
-                width: SIZE,
-                height: SIZE,
-                borderRadius: SIZE / 2,
-                borderColor: Colors.GREEN,
-                borderWidth: 2,
-                transform: [
-                  { translateX: circlePosition.x },
-                  { translateY: circlePosition.y },
-                ],
-              }}
-            />
           </View>
         </View>
-        {chess.turn() === side && (
-          <>
-            <View style={styles.turnIndicator}>
-              <Animated.Text
-                style={[styles.turnText, { transform: [{ scale: scaleAnim }] }]}
-              >
-                Đến lượt bạn!
-              </Animated.Text>
-              <View style={styles.timer}>
+        <View style={styles.turnIndicator}>
+          {chess.turn() === side && (
+            <Animated.Text
+              style={[styles.turnText, { transform: [{ scale: scaleAnim }] }]}
+            >
+              Đến lượt bạn!
+            </Animated.Text>
+          )}
+          {moveIndex > 0 && (
+            <View style={styles.timer}>
+              <Animated.Text style={{ transform: [{ scale: scaleAnim }] }}>
                 <IconCommunity
                   name="clock-outline"
                   size={28}
                   color={"black"}
                 />
-                <Text style={styles.timerText}>00:00</Text>
-              </View>
+              </Animated.Text>
+              <Text style={styles.timerText}>{timerFormat(time)}</Text>
             </View>
-            <TouchableOpacity style={styles.button}>
+          )}
+        </View>
+        {chess.turn() === side && (
+          <TouchableOpacity
+            style={[styles.button, styles.buttonHint]}
+            onPress={() => {
+              if (showHint) {
+                handleMoveHint();
+              } else {
+                setShowHint(true);
+              }
+            }}
+          >
+            {showHint ? (
               <Icon
-                name="tips-and-updates"
+                name="remove-red-eye"
+                size={24}
+                color={"green"}
+              />
+            ) : (
+              <IconCommunity
+                name="lightbulb-on-outline"
                 size={24}
                 color={"black"}
               />
-              <Text style={styles.buttonText}>Gợi ý</Text>
-            </TouchableOpacity>
-          </>
+            )}
+            <Text style={styles.buttonText}>
+              {showHint ? "Hiển thị di chuyển" : "Gợi ý"}
+            </Text>
+          </TouchableOpacity>
+        )}
+        {moveIndex >= moves.length && (
+          <TouchableOpacity
+            style={[styles.button, styles.buttonNext]}
+            onPress={() => {}}
+          >
+            <Text style={[styles.buttonText, { color: "white" }]}>
+              Câu tiếp theo
+            </Text>
+            <Icon
+              name="arrow-forward"
+              size={24}
+              color={"white"}
+            />
+          </TouchableOpacity>
         )}
       </GestureHandlerRootView>
     </>
@@ -294,17 +375,21 @@ const styles = StyleSheet.create({
     color: Colors.BLACK,
   },
   button: {
-    // width: "80%",
     height: 50,
     marginInline: "auto",
     paddingInline: 18,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.LIGHTBLUE,
     padding: 12,
     borderRadius: 50,
     elevation: 6,
     gap: 10,
+  },
+  buttonHint: {
+    backgroundColor: Colors.LIGHTBLUE,
+  },
+  buttonNext: {
+    backgroundColor: "green",
   },
   buttonText: {
     fontSize: 18,

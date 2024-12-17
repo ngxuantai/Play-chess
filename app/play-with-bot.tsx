@@ -163,9 +163,11 @@ export default function PlayWithBot() {
     } else {
       playSound(moveSoundPath);
     }
-    setTimeout(() => {
-      checkGameState();
-    }, 10000);
+    if (movelog) {
+      setTimeout(() => {
+        checkGameState();
+      }, 10000);
+    }
   }, [chess, side, checkGameState]);
 
   useEffect(() => {
