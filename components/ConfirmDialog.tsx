@@ -1,6 +1,6 @@
 import React from "react";
-import {Modal, View, Text, TouchableOpacity, StyleSheet} from "react-native";
-import {Colors} from "@/constants/Colors";
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 type ConfirmationDialogProps = {
   text: string;
@@ -28,13 +28,15 @@ const ConfirmationDialog = ({
               onPress={onCancel}
               style={styles.cancelButton}
             >
-              <Text style={[styles.textButton, {color: "red"}]}>Hủy</Text>
+              <Text style={[styles.textButton, { color: "red" }]}>Hủy</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onConfirm}
               style={styles.confirmButton}
             >
-              <Text style={[styles.textButton, {color: "white"}]}>Đồng ý</Text>
+              <Text style={[styles.textButton, { color: "white" }]}>
+                Đồng ý
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   confirmButton: {
-    backgroundColor: Colors.DARKBLUE,
+    backgroundColor: Colors.GREEN,
     borderRadius: 10,
     padding: 10,
     paddingInline: 20,

@@ -1,4 +1,4 @@
-import { Image } from "react-native";
+import { Image, TouchableOpacity, View, Modal, StyleSheet } from "react-native";
 import React, { useCallback, useState } from "react";
 import Animated, {
   runOnJS,
@@ -39,10 +39,11 @@ interface PieceProps {
   flip: boolean;
   onTurn: (move: Move) => void;
   enabled: boolean;
+  isPuzzle?: boolean;
 }
 
 const Piece = React.memo(
-  ({ id, position, chess, flip, onTurn, enabled }: PieceProps) => {
+  ({ id, position, chess, flip, onTurn, enabled, isPuzzle }: PieceProps) => {
     const isGestureActive = useSharedValue(false);
     const scale = useSharedValue(1);
     const offsetX = useSharedValue(0);
@@ -51,6 +52,14 @@ const Piece = React.memo(
     const translateY = useSharedValue(position.y);
 
     const [validMoves, setValidMoves] = useState([]);
+    const [promotionMove, setPromotionMove] = useState<{
+      from: Position;
+      to: Position;
+      color: Player;
+      x: number;
+      y: number;
+    } | null>(null);
+    const [isPromotionModalVisible, setPromotionModalVisible] = useState(false);
 
     const showLegalMoves = useSelector(selectShowLegalMoves);
 
@@ -58,7 +67,7 @@ const Piece = React.memo(
       position: "absolute",
       width: SIZE,
       height: SIZE,
-      zIndex: isGestureActive.value ? 100 : 10,
+      zIndex: isGestureActive.value ? 100 : 0,
       transform: [
         { translateX: translateX.value },
         { translateY: translateY.value },
@@ -129,8 +138,23 @@ const Piece = React.memo(
           offsetY.value = translateY.value;
         });
         if (move) {
-          chess.move(move);
-          onTurn(move);
+          if (move.flags.includes("p")) {
+            setPromotionMove({
+              from,
+              to,
+              color: move.color as Player,
+              x: x,
+              y: y,
+            });
+            setPromotionModalVisible(true);
+          } else {
+            if (isPuzzle) {
+              onTurn(move);
+            } else {
+              chess.move(move);
+              onTurn(move);
+            }
+          }
         }
         setValidMoves([]);
       },
@@ -143,10 +167,23 @@ const Piece = React.memo(
           return;
         }
         const moves = chess.moves({ square: from, verbose: true });
-        setValidMoves(moves.map((m) => m.to));
+        setValidMoves([...new Set(moves.map((m) => m.to))]);
       },
       [chess]
     );
+
+    const handlePromotion = (promotion) => {
+      if (promotionMove) {
+        const move = chess.move({
+          from: promotionMove.from,
+          to: promotionMove.to,
+          promotion,
+        });
+        onTurn(move);
+        setPromotionModalVisible(false);
+        setPromotionMove(null);
+      }
+    };
 
     const panGesture = enabled
       ? Gesture.Pan()
@@ -172,6 +209,7 @@ const Piece = React.memo(
             isGestureActive.value = false;
           })
       : Gesture.Tap();
+
     return (
       <>
         {validMoves.map((move) => {
@@ -203,9 +241,74 @@ const Piece = React.memo(
             />
           </Animated.View>
         </GestureDetector>
+        {promotionMove && (
+          <View>
+            <Modal
+              transparent={true}
+              visible={isPromotionModalVisible}
+            >
+              <TouchableOpacity
+                style={styles.overlay}
+                onPress={() => setPromotionModalVisible(false)}
+              >
+                <View
+                  style={[
+                    styles.modalContainer,
+                    {
+                      left: promotionMove.x - SIZE * 4.5,
+                      top: promotionMove.y + SIZE * 3,
+                    },
+                  ]}
+                >
+                  {(["q", "r", "n", "b"] as Type[]).map((piece) => (
+                    <TouchableOpacity
+                      key={piece}
+                      onPress={() => handlePromotion(piece)}
+                      style={styles.button}
+                    >
+                      <Image
+                        source={PIECES[`${promotionMove.color}${piece}`]}
+                        style={styles.imgButton}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </TouchableOpacity>
+            </Modal>
+          </View>
+        )}
       </>
     );
   }
 );
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+  },
+  modalContainer: {
+    position: "absolute",
+    flexDirection: "row",
+    gap: 10,
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  button: {
+    padding: 5,
+    marginVertical: 5,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
+  },
+  imgButton: {
+    width: SIZE * 0.8,
+    height: SIZE * 0.8,
+  },
+});
 
 export default Piece;

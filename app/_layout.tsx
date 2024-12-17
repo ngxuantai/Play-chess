@@ -79,6 +79,10 @@ export default function RootLayout() {
           options={{ title: "Chơi với máy" }}
         />
         <Stack.Screen
+          name="play-puzzles"
+          options={{ title: "Câu đố cờ vua" }}
+        />
+        <Stack.Screen
           name="settings"
           options={{ title: "Cài đặt" }}
         />
