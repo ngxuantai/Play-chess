@@ -19,7 +19,6 @@ import GlobalLoading from "@/components/GlobalLoading";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
 import { useConst } from "@/hooks/useConst";
-import { useSocketEvent } from "@/hooks/useSocketEvent";
 import { SIZE } from "@/utils/chessUtils";
 import { timerFormat } from "@/utils/dateTimeFormat";
 import { Colors } from "@/constants/Colors";
@@ -29,6 +28,8 @@ import { selectAccessToken, selectUser } from "@/redux/selectors/authSelectors";
 import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
 import { stopLoading } from "@/redux/slices/loadingSlice";
 import { PlayerInfo } from "@/types";
+import ChatModal from "@/components/ChatModal";
+import ChatBubble from "react-native-chat-bubble";
 
 const { width } = Dimensions.get("window");
 
@@ -67,59 +68,99 @@ export default function PlayOnline() {
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const [showResignDialog, setShowResignDialog] = useState<boolean>(false);
+  const [showDrawDialog, setShowDrawDialog] = useState<boolean>(false);
+  const [showConfirmDrawDialog, setShowConfirmDrawDialog] =
+    useState<boolean>(false);
   const [showChessResultModal, setShowChessResultModal] =
     useState<boolean>(false);
+  const [isChatVisible, setChatVisible] = useState<boolean>(false);
+  const [chatBubble, setChatBubble] = useState<{
+    playerId: number;
+    message: string;
+  } | null>(null);
+  const [chatHistory, setChatHistory] = useState<
+    { playerId: number; message: string }[]
+  >([]);
 
   useEffect(() => {
     socketService.connect(token);
     socketService.emit("joinGame", { gameId: Number(id) });
 
+    socketService.on("gameState", (data) => {
+      setActiveBoard((prev) => (prev === data.status ? prev : data.status));
+
+      setPlayers((prevPlayers) => {
+        if (prevPlayers.white.id === null || prevPlayers.black.id === null) {
+          const isWhite = data.whitePlayerId === user?.id;
+          setSide(isWhite ? "w" : "b");
+
+          return {
+            white: {
+              id: data.whitePlayerId,
+              username: isWhite ? user?.username : prevPlayers.white.username,
+            },
+            black: {
+              id: data.blackPlayerId,
+              username: !isWhite ? user?.username : prevPlayers.black.username,
+            },
+          };
+        }
+        return prevPlayers;
+      });
+
+      chess.load(data.fen);
+      setState({
+        player: data.turn,
+        board: chess.board(),
+      });
+      setWhiteTime(data.whiteTimeRemaining);
+      setBlackTime(data.blackTimeRemaining);
+      if (data.lastMoveResult)
+        setMoveHistory((prev) => [...prev, data.lastMoveResult]);
+    });
+
+    socketService.on("gameOver", (data) => {
+      if (data.winner === null) {
+        setResult("draw");
+      } else if (data.winner === user?.id) {
+        setResult("win");
+      } else {
+        setResult("lose");
+      }
+      setShowChessResultModal(true);
+    });
+
+    socketService.on("drawOffered", (data) => {
+      console.log("Draw offered:", data);
+      if (data.offeredBy !== user?.id) {
+        setShowConfirmDrawDialog(true);
+      }
+    });
+
+    socketService.on("drawDeclined", (data) => {
+      console.log("Draw declined:", data);
+    });
+
+    socketService.on("chatMessage", (data) => {
+      if (data.senderId) {
+        setChatBubble({
+          playerId: data.senderId,
+          message: data.message,
+        });
+        setChatHistory((prev) => [
+          ...prev,
+          { playerId: data.senderId, message: data.message },
+        ]);
+        setTimeout(() => {
+          setChatBubble(null);
+        }, 5000);
+      }
+    });
+
     return () => {
       socketService.disconnect();
     };
   }, [token, id]);
-
-  useSocketEvent("gameState", (data) => {
-    setActiveBoard((prev) => (prev === data.status ? prev : data.status));
-
-    setPlayers((prevPlayers) => {
-      if (prevPlayers.white.id === null || prevPlayers.black.id === null) {
-        const isWhite = data.whitePlayerId === user?.id;
-        setSide(isWhite ? "w" : "b");
-
-        return {
-          white: {
-            id: data.whitePlayerId,
-            username: isWhite ? user?.username : prevPlayers.white.username,
-          },
-          black: {
-            id: data.blackPlayerId,
-            username: !isWhite ? user?.username : prevPlayers.black.username,
-          },
-        };
-      }
-      return prevPlayers;
-    });
-
-    chess.load(data.fen);
-    setState({
-      player: data.turn,
-      board: chess.board(),
-    });
-    setWhiteTime(data.whiteTimeRemaining);
-    setBlackTime(data.blackTimeRemaining);
-  });
-
-  useSocketEvent("gameOver", (data) => {
-    if (data.winner === null) {
-      setResult("draw");
-    } else if (data.winner === user?.id) {
-      setResult("win");
-    } else {
-      setResult("lose");
-    }
-    setShowChessResultModal(true);
-  });
 
   const handleTimer = useCallback(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -215,6 +256,12 @@ export default function PlayOnline() {
     }
   }, [activeBoard, side, players.black.id, players.white.id]);
 
+  const handleCloseDialog = useCallback(() => {
+    setShowResignDialog(false);
+    setShowDrawDialog(false);
+    setShowConfirmDrawDialog(false);
+  }, []);
+
   if (isLoading)
     return (
       <View style={styles.container}>
@@ -224,6 +271,19 @@ export default function PlayOnline() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <View>
+        <ChatModal
+          visible={isChatVisible}
+          setVisble={setChatVisible}
+          chatHistory={chatHistory}
+          onMessageSend={(message) => {
+            socketService.emit("chatMessage", {
+              gameId: Number(id),
+              message: message,
+            });
+          }}
+        />
+      </View>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Icon
@@ -247,7 +307,10 @@ export default function PlayOnline() {
             <MoveHistory moveHistory={moveHistory} />
           )}
         </View>
-        <TouchableOpacity style={styles.refreshButton}>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={() => setShowDrawDialog(true)}
+        >
           <Icon
             name="handshake"
             size={24}
@@ -265,13 +328,31 @@ export default function PlayOnline() {
           />
         </TouchableOpacity>
         <ConfirmationDialog
-          text="Bạn có chắc chắn muốn đầu hàng?"
-          visible={showResignDialog}
+          text={
+            showResignDialog
+              ? "Bạn có chắc chắn muốn đầu hàng?"
+              : showDrawDialog
+              ? "Bạn muốn đề nghị hòa không?"
+              : "Đối thủ muốn hòa, bạn có đồng ý không?"
+          }
+          visible={showResignDialog || showDrawDialog || showConfirmDrawDialog}
           onConfirm={() => {
-            socketService.emit("resign", { gameId: Number(id) });
-            setShowResignDialog(false);
+            if (showResignDialog)
+              socketService.emit("resign", { gameId: Number(id) });
+            else if (showDrawDialog)
+              socketService.emit("offerDraw", { gameId: Number(id) });
+            else if (showConfirmDrawDialog)
+              socketService.emit("respondToDraw", {
+                gameId: Number(id),
+                accept: true,
+              });
+            handleCloseDialog();
           }}
-          onCancel={() => setShowResignDialog(false)}
+          onCancel={() => {
+            if (showConfirmDrawDialog)
+              socketService.emit("offerDraw", { gameId: Number(id) });
+            handleCloseDialog();
+          }}
         />
         <ChessResultModal
           visible={showChessResultModal}
@@ -281,7 +362,14 @@ export default function PlayOnline() {
           opponentName={
             side === "w" ? players.black.username : players.white.username
           }
-          onExit={() => setShowChessResultModal(false)}
+          onExit={() => {
+            setShowChessResultModal(false);
+            router.back();
+          }}
+          // onPlayAgain={() => {
+          //   setShowChessResultModal(false);
+          //   socketService.emit("playAgain", { gameId: Number(id) });
+          // }}
         />
       </View>
       <View
@@ -298,10 +386,34 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
+        {chatBubble !== null && chatBubble?.playerId !== user?.id && (
+          <View style={styles.chatBubble}>
+            <ChatBubble
+              isOwnMessage={false}
+              bubbleColor={Colors.GREY}
+              tailColor={Colors.GREY}
+              withTail={true}
+              zIndex={1000}
+            >
+              <Text
+                style={[
+                  styles.chatBubbleText,
+                  {
+                    color: Colors.BLACK,
+                  },
+                ]}
+              >
+                {chatBubble?.message}
+              </Text>
+            </ChatBubble>
+          </View>
+        )}
         <Text style={styles.playerText}>
           {activeBoard === "waiting"
             ? "Đang chờ đối thủ..."
-            : players.black.username}
+            : side === "w"
+            ? players.black.username
+            : players.white.username}
         </Text>
         <View style={styles.timer}>
           <Icon
@@ -339,6 +451,28 @@ export default function PlayOnline() {
           }
           style={styles.playerIcon}
         />
+        {chatBubble !== null && chatBubble?.playerId === user?.id && (
+          <View style={styles.chatBubble}>
+            <ChatBubble
+              isOwnMessage={false}
+              bubbleColor={Colors.BLUE}
+              tailColor={Colors.BLUE}
+              withTail={true}
+              zIndex={1000}
+            >
+              <Text
+                style={[
+                  styles.chatBubbleText,
+                  {
+                    color: "white",
+                  },
+                ]}
+              >
+                {chatBubble?.message}
+              </Text>
+            </ChatBubble>
+          </View>
+        )}
         <Text style={styles.playerText}>{user?.username}</Text>
         <View style={styles.timer}>
           <Icon
@@ -352,7 +486,10 @@ export default function PlayOnline() {
         </View>
       </View>
       <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <TouchableOpacity style={styles.messageButton}>
+        <TouchableOpacity
+          style={styles.messageButton}
+          onPress={() => setChatVisible(true)}
+        >
           <Icon
             name="chat-processing"
             size={24}
@@ -432,5 +569,14 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     width: 45,
+  },
+  chatBubble: {
+    position: "absolute",
+    top: -40,
+    left: 50,
+  },
+  chatBubbleText: {
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
