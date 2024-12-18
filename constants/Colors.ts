@@ -10,7 +10,9 @@ export const Colors = {
   LIGHTBLUE: "#cfe4ff",
   BLUE: "#1976d2",
   DARKBLUE: "#6f85a0",
-  GREY: "#b7b7b7"
+  GREY: "#b7b7b7",
+  RED: "#ff0000",
+  HIGHLIGHT: "#F8EB7C",
 };
 
 export const backgroundTheme = [
@@ -40,4 +42,3 @@ export const backgroundTheme = [
 //     tabIconSelected: tintColorDark,
 //   },
 // };
-

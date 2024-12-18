@@ -27,18 +27,15 @@ import { SIZE, toTranslation } from "@/utils/chessUtils";
 import IconCommunity from "react-native-vector-icons/MaterialCommunityIcons";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Colors } from "@/constants/Colors";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePlaySound } from "@/hooks/usePlaySound";
 import { timerFormat } from "@/utils/dateTimeFormat";
 
 const { width } = Dimensions.get("window");
 
-const moveSoundPath = require("../assets/sound/move.mp3");
-const captureSoundPath = require("../assets/sound/capture.mp3");
-
 export default function PlayPuzzles() {
   const dispatch = useDispatch();
   const chess = useConst(() => new Chess());
+  const playSound = usePlaySound();
   const isLoading = useSelector(selectIsLoading);
 
   const fen = "q3k1nr/1pp1nQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 b k - 0 17";
@@ -50,6 +47,9 @@ export default function PlayPuzzles() {
     board: [] as (Piece | null)[][],
   });
   const [moveIndex, setMoveIndex] = useState(0);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null
+  );
   const [time, setTime] = useState(0);
   const [isMoveCorrect, setIsMoveCorrect] = useState(true);
   const [showHint, setShowHint] = useState(false);
@@ -114,8 +114,14 @@ export default function PlayPuzzles() {
         setIsMoveCorrect(true);
         setMoveIndex((prev) => prev + 1);
       }
-      chess.move(move);
-
+      const moveLog = chess.move(move);
+      if (moveLog) {
+        setLastMove({
+          from: moveLog.from,
+          to: moveLog.to,
+        });
+        playSound(moveLog.captured ? "captured" : "move");
+      }
       setState({
         player: chess.turn(),
         board: chess.board(),
@@ -151,11 +157,14 @@ export default function PlayPuzzles() {
   }, [state.board, side, chess, state.player]);
 
   const handleUndo = useCallback(() => {
-    chess.undo();
+    chess.load(fen);
     setState({
       player: chess.turn(),
       board: chess.board(),
     });
+    setMoveIndex(0);
+    setTime(0);
+    setLastMove(null);
     setIsMoveCorrect(true);
   }, [chess]);
 
@@ -168,7 +177,14 @@ export default function PlayPuzzles() {
     ) {
       dispatch(stopLoading());
       const timerId = setTimeout(() => {
-        chess.move(moves[moveIndex]);
+        const moveLog = chess.move(moves[moveIndex]);
+        if (moveLog) {
+          setLastMove({
+            from: moveLog.from,
+            to: moveLog.to,
+          });
+          playSound(moveLog.captured ? "captured" : "move");
+        }
         setState({
           player: chess.turn(),
           board: chess.board(),
@@ -181,11 +197,18 @@ export default function PlayPuzzles() {
 
   const handleMoveHint = useCallback(() => {
     if (moveIndex < moves.length) {
-      chess.move(moves[moveIndex]);
+      const moveLog = chess.move(moves[moveIndex]);
       setState({
         player: chess.turn(),
         board: chess.board(),
       });
+      if (moveLog) {
+        setLastMove({
+          from: moveLog?.from,
+          to: moveLog?.to,
+        });
+        playSound(moveLog.captured ? "captured" : "move");
+      }
       setMoveIndex((prev) => prev + 1);
       setShowHint(false);
     }
@@ -236,7 +259,10 @@ export default function PlayPuzzles() {
         </View>
         <View style={styles.boardContainer}>
           <View style={[styles.board, { position: "relative" }]}>
-            <Background flip={side !== "" && side === "b"} />
+            <Background
+              flip={side !== "" && side === "b"}
+              lastMove={{ from: lastMove?.from, to: lastMove?.to }}
+            />
             {showHint && (
               <View
                 style={{

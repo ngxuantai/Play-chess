@@ -1,7 +1,6 @@
 import SettingRow from "@/components/SettingRow";
 import UserProfile from "@/components/UserProfile";
 import { View, Text, StyleSheet, Switch, ScrollView } from "react-native";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Colors } from "@/constants/Colors";
 import { Divider } from "react-native-paper";
@@ -25,19 +24,17 @@ export default function Settings() {
         <View style={styles.container}>
           <Text style={styles.titleText}>Chung</Text>
           <Divider style={styles.divider} />
-          {/* <SettingRow
-            icon="music-note"
-            text="Âm thanh"
-          /> */}
-          {/* <SettingRow
-            icon="account-music"
-            text="Chỉ có âm thanh khi di chuyển"
-          /> */}
           <SettingRow
             icon="music"
             text="Âm nhạc"
             state={settings.isAppSoundPlaying}
             onToggle={() => handleToggle("isAppSoundPlaying")}
+          />
+          <SettingRow
+            icon="music"
+            text="Âm thanh khi di chuyển"
+            state={settings.isMoveSoundPlaying}
+            onToggle={() => handleToggle("isMoveSoundPlaying")}
           />
           {/* <SettingRow
             icon="file-music"
