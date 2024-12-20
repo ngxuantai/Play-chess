@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  loginGoogleAction,
   loginAction,
   registerAction,
   getProfileAction,
@@ -27,6 +28,24 @@ const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Login Google Reducers
+    builder.addCase(loginGoogleAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(loginGoogleAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload.user;
+      state.access_token = action.payload.access_token;
+    });
+    builder.addCase(loginGoogleAction.rejected, (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.access_token = null;
+      state.error = action.payload as string;
+    });
     // Login Reducers
     builder.addCase(loginAction.pending, (state) => {
       state.loading = true;

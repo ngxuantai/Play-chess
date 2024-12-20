@@ -43,7 +43,6 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <AuthRedirect currentRoute={currentRoute} />
       <BackgroundMusic currentRoute={currentRoute} />
       <Stack
         screenListeners={{
@@ -89,20 +88,4 @@ export default function RootLayout() {
       </Stack>
     </Provider>
   );
-}
-
-function AuthRedirect({ currentRoute }: { currentRoute: string | null }) {
-  const router = useRouter();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      (currentRoute === "login" || currentRoute === "register")
-    ) {
-      router.dismissAll();
-    }
-  }, [isAuthenticated, currentRoute, router]);
-
-  return null;
 }

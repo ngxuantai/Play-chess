@@ -74,13 +74,13 @@ const MoveHistory = ({ moveHistory }: { moveHistory: Move[] }) => {
 
 const styles = StyleSheet.create({
   item: {
-    marginInlineEnd: 10,
+    marginBlockEnd: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
   },
   move: {
-    paddingInline: 4,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
   },

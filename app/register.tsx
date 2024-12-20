@@ -8,13 +8,14 @@ import {
   Image,
   ScrollView,
 } from "react-native";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import { registerAction } from "@/redux/actions/authActions";
+import { registerAction, loginGoogleAction } from "@/redux/actions/authActions";
 import { selectAuth } from "@/redux/selectors/authSelectors";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import { Divider } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -41,6 +42,7 @@ const signUpValidationSchema = Yup.object().shape({
 
 export default function Register() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { redirectTo } = useLocalSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, isAuthenticated } = useSelector(selectAuth);
@@ -66,10 +68,24 @@ export default function Register() {
     );
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.signOut();
+      const req = await GoogleSignin.signIn();
+      dispatch(loginGoogleAction(req.data?.idToken));
+    } catch (error) {
+      console.log("Google login error", error);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       if (redirectTo) {
-        router.push(redirectTo);
+        navigation.reset({
+          index: 1,
+          routes: [{ name: "index" }, { name: redirectTo }],
+        });
       } else router.dismissAll();
     }
   }, [isAuthenticated]);
@@ -205,7 +221,10 @@ export default function Register() {
         )}
       </Formik>
       <View style={styles.otherOptionsContainer}>
-        <TouchableOpacity style={styles.outlinedButton}>
+        <TouchableOpacity
+          style={styles.outlinedButton}
+          onPress={() => handleGoogleLogin()}
+        >
           <Icon
             name="google"
             size={20}
@@ -213,14 +232,14 @@ export default function Register() {
           />
           <Text style={styles.outlinedButtonText}>Google</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.outlinedButton}>
+        {/* <TouchableOpacity style={styles.outlinedButton}>
           <Icon
             name="facebook"
             size={20}
             color={Colors.DARKBLUE}
           />
           <Text style={styles.outlinedButtonText}>Facebook</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       <Divider
         bold

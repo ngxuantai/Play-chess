@@ -190,12 +190,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginBottom: 20,
-    paddingInline: 12,
+    paddingHorizontal: 12,
   },
   info: {
     flexDirection: "column",
     alignItems: "center",
-    paddingInline: 8,
+    paddingHorizontal: 8,
     borderRadius: 16,
   },
   imageLogo: {

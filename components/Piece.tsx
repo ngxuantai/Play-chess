@@ -148,12 +148,12 @@ const Piece = React.memo(
             });
             setPromotionModalVisible(true);
           } else {
-            if (isPuzzle) {
-              onTurn(move);
-            } else {
-              chess.move(move);
-              onTurn(move);
-            }
+            onTurn(move);
+            // if (isPuzzle) {
+            // } else {
+            //   chess.move(move);
+            //   onTurn(move);
+            // }
           }
         }
         setValidMoves([]);

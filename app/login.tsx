@@ -8,16 +8,22 @@ import {
   Image,
   ScrollView,
 } from "react-native";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { Divider } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import { loginAction } from "@/redux/actions/authActions";
+import { loginAction, loginGoogleAction } from "@/redux/actions/authActions";
 import { selectAuth } from "@/redux/selectors/authSelectors";
+
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+  scopes: ["email", "profile"],
+});
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
@@ -37,6 +43,7 @@ const LoginSchema = Yup.object().shape({
 
 export default function Login() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { redirectTo } = useLocalSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, isAuthenticated } = useSelector(selectAuth);
@@ -56,10 +63,24 @@ export default function Login() {
     );
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.signOut();
+      const req = await GoogleSignin.signIn();
+      dispatch(loginGoogleAction(req.data?.idToken));
+    } catch (error) {
+      console.log("Google login error", error);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       if (redirectTo) {
-        router.replace(redirectTo);
+        navigation.reset({
+          index: 1,
+          routes: [{ name: "index" }, { name: redirectTo }],
+        });
       } else router.dismissAll();
     }
   }, [isAuthenticated]);
@@ -145,7 +166,10 @@ export default function Login() {
       </Formik>
       {/* <Text style={{ marginTop: 10 }}>Lost password?</Text> */}
       <View style={styles.otherOptionsContainer}>
-        <TouchableOpacity style={styles.outlinedButton}>
+        <TouchableOpacity
+          style={styles.outlinedButton}
+          onPress={() => handleGoogleLogin()}
+        >
           <Icon
             name="google"
             size={20}
@@ -153,14 +177,14 @@ export default function Login() {
           />
           <Text style={styles.outlinedButtonText}>Google</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.outlinedButton}>
+        {/* <TouchableOpacity style={styles.outlinedButton}>
           <Icon
             name="facebook"
             size={20}
             color={Colors.DARKBLUE}
           />
           <Text style={styles.outlinedButtonText}>Facebook</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       <Divider
         bold

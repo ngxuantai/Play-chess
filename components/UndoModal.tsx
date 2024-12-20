@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   buttonGroup: {
     width: "80%",
-    marginInline: "auto",
+    marginHorizontal: "auto",
     flexDirection: "row",
     justifyContent: "space-between",
   },
