@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -7,20 +7,44 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { selectAuth } from "@/redux/selectors/authSelectors";
 import { Colors } from "@/constants/Colors";
+import ChangeUserInfoModal from "./ChangeUserInfoModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { store } from "@/redux/store";
+import { getProfileAction } from "@/redux/actions/authActions";
 
 const UserProfile = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, user } = useSelector(selectAuth);
+  const [changeUserInfoModalVisible, setChangeUserInfoModalVisible] =
+    useState(false);
 
   const handleLogout = () => {
     dispatch(logoutAction());
+  };
+
+  const handleUserInfoChange = async () => {
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (token !== null) {
+        store.dispatch(getProfileAction(token));
+      }
+    } catch (error) {
+      console.log("Error loading token:", error);
+    }
   };
 
   return (
     <View style={styles.profileContainer}>
       {isAuthenticated ? (
         <View style={styles.infoContainer}>
+          <View>
+            <ChangeUserInfoModal
+              visible={changeUserInfoModalVisible}
+              setVisible={setChangeUserInfoModalVisible}
+              onSave={() => handleUserInfoChange()}
+            />
+          </View>
           <View
             style={{
               width: "30%",
@@ -42,7 +66,33 @@ const UserProfile = () => {
               gap: 10,
             }}
           >
-            <Text style={styles.userNameText}>{user?.username}</Text>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.userNameText}
+              >
+                {user?.username}
+              </Text>
+              <TouchableOpacity
+                style={{ marginLeft: 10 }}
+                onPress={() => {
+                  setChangeUserInfoModalVisible(true);
+                }}
+              >
+                <Icon
+                  name="square-edit-outline"
+                  size={30}
+                  color={Colors.DARKBLUE}
+                />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.text}>Email: {user?.email}</Text>
             <Text style={styles.text}>Cấp độ: {user?.rating}</Text>
             <TouchableOpacity
@@ -116,9 +166,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   userNameText: {
+    maxWidth: "70%",
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 6,
   },
   text: {
     fontSize: 16,

@@ -5,7 +5,7 @@ class socketService {
 
   connect(token: string) {
     if (!this.socket) {
-      this.socket = io("http://192.168.31.242:8080/games", {
+      this.socket = io("http://192.168.1.172:8080/games", {
         transports: ["websocket"],
         auth: {
           token,
