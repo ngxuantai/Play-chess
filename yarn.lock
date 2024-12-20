@@ -2052,6 +2052,11 @@
     prompts "^2.4.0"
     semver "^6.3.0"
 
+"@react-native-google-signin/google-signin@^13.1.0":
+  version "13.1.0"
+  resolved "https://registry.npmjs.org/@react-native-google-signin/google-signin/-/google-signin-13.1.0.tgz"
+  integrity sha512-C2/sqb0/s0c+Dwc/mykASZsRuHxGqn7SFrCxCY9D8p8IOQO05haInhCc7lzraJshRixGva5c/4usQZ71HMYSEQ==
+
 "@react-native/assets-registry@0.76.1":
   version "0.76.1"
   resolved "https://registry.npmjs.org/@react-native/assets-registry/-/assets-registry-0.76.1.tgz"
@@ -4587,7 +4592,7 @@ expo-web-browser@~14.0.1:
   resolved "https://registry.npmjs.org/expo-web-browser/-/expo-web-browser-14.0.1.tgz"
   integrity sha512-QM9F3ie+UyIOoBvqFmT6CZojb1vMc2H+7ZlMT5dEu1PL2jtYyOeK2hLfbt/EMt7CBm/w+P29H9W9Y9gdebOkuQ==
 
-expo@*, expo@^52.0.0:
+expo@*, expo@^52.0.0, expo@>=50.0.0:
   version "52.0.6"
   resolved "https://registry.npmjs.org/expo/-/expo-52.0.6.tgz"
   integrity sha512-Dci5Ezs+98KZ+onLl0pQ2y+t2cW3Kkhqv485nxZXPpSqcp+Y33ZZ6L+SUxY2zhnYx/cB5LNPnjDmrEdaCAP60A==
@@ -7488,6 +7493,7 @@ pkg-dir@^4.2.0:
   dependencies:
     "@expo/vector-icons" "^14.0.2"
     "@react-native-async-storage/async-storage" "^2.1.0"
+    "@react-native-google-signin/google-signin" "^13.1.0"
     "@react-navigation/native" "^6.0.2"
     "@reduxjs/toolkit" "^2.4.0"
     axios "^1.7.9"
@@ -7510,6 +7516,7 @@ pkg-dir@^4.2.0:
     react-native "0.76.1"
     react-native-chat-bubble "^1.0.0"
     react-native-gesture-handler "~2.20.2"
+    react-native-navigators "^0.3.11"
     react-native-paper "^5.12.5"
     react-native-reanimated "~3.16.1"
     react-native-redash "^18.1.3"
@@ -7742,7 +7749,7 @@ react-devtools-core@^5.3.1:
     shell-quote "^1.6.1"
     ws "^7"
 
-"react-dom@^16.6.0 || ^17.0.0 || ^18.0.0", react-dom@^18.0.0, react-dom@18.3.1:
+react-dom@*, "react-dom@^16.6.0 || ^17.0.0 || ^18.0.0", react-dom@^18.0.0, react-dom@18.3.1:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz"
   integrity sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==
