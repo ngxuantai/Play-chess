@@ -402,8 +402,8 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 50,
-    marginInline: "auto",
-    paddingInline: 18,
+    marginHorizontal: "auto",
+    paddingHorizontal: 18,
     flexDirection: "row",
     alignItems: "center",
     padding: 12,

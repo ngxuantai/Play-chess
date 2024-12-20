@@ -3,6 +3,31 @@ import { authApi } from "@/api/auth.api";
 import { LoginCredentials, RegisterCredentials } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export const loginGoogleAction = createAsyncThunk(
+  "auth/loginGoogle",
+  async (token: string, { rejectWithValue }) => {
+    try {
+      const response = await authApi.loginGoogle(token);
+
+      await AsyncStorage.setItem("access_token", response.data.access_token);
+
+      const userResponce = await authApi.getProfile();
+
+      return {
+        user: {
+          id: userResponce.data.id,
+          username: userResponce.data.username,
+          email: userResponce.data.email,
+          rating: userResponce.data.rating,
+        },
+        access_token: response.data.access_token,
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Đăng nhập thất bại");
+    }
+  }
+);
+
 export const loginAction = createAsyncThunk(
   "auth/login",
   async (credentials: LoginCredentials, { rejectWithValue }) => {

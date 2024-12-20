@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     maxHeight: "70%",
     borderRadius: 10,
     padding: 14,
-    paddingInline: 20,
+    paddingHorizontal: 20,
   },
   option: {
     flexDirection: "row",

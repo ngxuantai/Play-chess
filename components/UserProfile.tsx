@@ -62,7 +62,7 @@ const UserProfile = () => {
           <View
             style={{
               flexDirection: "column",
-              paddingInline: 10,
+              paddingHorizontal: 10,
               gap: 10,
             }}
           >
@@ -119,7 +119,7 @@ const UserProfile = () => {
               router.replace({
                 pathname: "/login",
                 params: {
-                  redirectTo: "/settings",
+                  redirectTo: "settings",
                 },
               });
             }}
@@ -132,7 +132,7 @@ const UserProfile = () => {
               router.replace({
                 pathname: "/register",
                 params: {
-                  redirectTo: "/settings",
+                  redirectTo: "settings",
                 },
               })
             }

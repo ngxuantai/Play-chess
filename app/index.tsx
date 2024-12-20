@@ -54,7 +54,7 @@ export default function index() {
               router.push({
                 pathname: "/login",
                 params: {
-                  redirectTo: "/room-list",
+                  redirectTo: "room-list",
                 },
               });
             }
@@ -64,6 +64,7 @@ export default function index() {
           icon="robot"
           text="Chơi với Máy tính"
           onPress={() => {
+            dispatch(startLoading("Đang tạo bàn cờ"));
             router.push("/play-with-bot");
           }}
         />
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: Colors.LIGHTBLUE,
     padding: 10,
-    paddingInline: 20,
+    paddingHorizontal: 20,
     borderRadius: 12,
     marginVertical: 10,
     width: "48%",

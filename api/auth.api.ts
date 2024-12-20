@@ -2,6 +2,16 @@ import axiosInstance from "./axiosInstance";
 import { LoginCredentials, RegisterCredentials } from "@/types";
 
 export const authApi = {
+  loginGoogle: async (token: string) => {
+    try {
+      const response = await axiosInstance.post("/auth/google", { token });
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
+  },
+
   login: async (credentials: LoginCredentials) => {
     try {
       const response = await axiosInstance.post("/auth/login", credentials);

@@ -5,7 +5,7 @@ class socketService {
 
   connect(token: string) {
     if (!this.socket) {
-      this.socket = io("http://192.168.1.172:8080/games", {
+      this.socket = io(`${process.env.EXPO_PUBLIC_BASE_URL}/games`, {
         transports: ["websocket"],
         auth: {
           token,

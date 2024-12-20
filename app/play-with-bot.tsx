@@ -54,7 +54,7 @@ export default function PlayWithBot() {
 
   const loadGameState = useCallback(async () => {
     try {
-      dispatch(startLoading("Đang tải bàn cờ cũ"));
+      // dispatch(startLoading("Đang tải bàn cờ cũ"));
 
       const gameState = await AsyncStorage.getItem("gameState");
       if (gameState) {
@@ -148,23 +148,26 @@ export default function PlayWithBot() {
 
   const onTurn = useCallback(
     (move: Move) => {
-      setMoveHistory((prev) => [...prev, move]);
-      setState({
-        player: chess.turn(),
-        board: chess.board(),
-      });
-      setLastMove({
-        from: move.from,
-        to: move.to,
-      });
-      if (move.captured) {
-        playSound("captured");
-      } else {
-        playSound("move");
+      const moveLog = chess.move(move);
+      if (moveLog) {
+        setMoveHistory((prev) => [...prev, moveLog]);
+        setState({
+          player: chess.turn(),
+          board: chess.board(),
+        });
+        setLastMove({
+          from: moveLog.from,
+          to: moveLog.to,
+        });
+        if (moveLog.captured) {
+          playSound("captured");
+        } else {
+          playSound("move");
+        }
+        setTimeout(() => {
+          checkGameState();
+        }, 3000);
       }
-      setTimeout(() => {
-        checkGameState();
-      }, 3000);
     },
     [chess, state.player, checkGameState]
   );
@@ -195,7 +198,9 @@ export default function PlayWithBot() {
 
   useEffect(() => {
     if (side !== "" && state.board.length > 0 && state.player !== side) {
-      makeBotMove();
+      setTimeout(() => {
+        makeBotMove();
+      }, 2000);
     }
   }, [state.board, makeBotMove, side, state.player]);
 
