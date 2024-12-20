@@ -163,9 +163,6 @@ export default function PlayWithBot() {
         playSound("move");
       }
       setTimeout(() => {
-        setPlayerMove(false);
-      });
-      setTimeout(() => {
         checkGameState();
       }, 3000);
     },
@@ -197,16 +194,10 @@ export default function PlayWithBot() {
   }, [chess, side, checkGameState]);
 
   useEffect(() => {
-    if (
-      side !== "" &&
-      state.board.length > 0 &&
-      state.player !== side &&
-      !playerMove
-    ) {
-      setPlayerMove(true);
+    if (side !== "" && state.board.length > 0 && state.player !== side) {
       makeBotMove();
     }
-  }, [state.board, makeBotMove, state.player, playerMove]);
+  }, [state.board, makeBotMove, side, state.player]);
 
   const renderBoard = useMemo(() => {
     if (state.board.length === 0) return null;
