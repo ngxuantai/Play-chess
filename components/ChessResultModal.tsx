@@ -87,7 +87,7 @@ const ChessResultModal = ({
                   ? "Thắng"
                   : result === "lose"
                   ? "Thua"
-                  : "HòaHòa"}
+                  : "Hòa"}
               </Text>
             </View>
             <Text style={styles.resultText}>vs</Text>
@@ -115,7 +115,7 @@ const ChessResultModal = ({
                   ? "Thắng"
                   : result === "win"
                   ? "Thua"
-                  : "HòaHòa"}
+                  : "Hòa"}
               </Text>
             </View>
           </View>

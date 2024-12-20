@@ -1,8 +1,23 @@
 import { useCallback } from "react";
+import { useSelector } from "react-redux";
+import { selectIsMoveSoundPlaying } from "@/redux/selectors/settingsSelectors";
 import { Audio } from "expo-av";
 
+const moveSoundPath = require("../assets/sound/move.mp3");
+const captureSoundPath = require("../assets/sound/capture.mp3");
+
 export function usePlaySound() {
-  const playSound = useCallback(async (soundPath: any) => {
+  const isMoveSoundPlaying = useSelector(selectIsMoveSoundPlaying);
+
+  if (!isMoveSoundPlaying) return () => {};
+
+  const playSound = useCallback(async (soundType: any) => {
+    let soundPath = null;
+    if (soundType === "move") {
+      soundPath = moveSoundPath;
+    } else if (soundType === "captured") {
+      soundPath = captureSoundPath;
+    }
     const { sound } = await Audio.Sound.createAsync(soundPath);
 
     try {

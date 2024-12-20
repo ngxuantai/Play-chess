@@ -19,6 +19,7 @@ import GlobalLoading from "@/components/GlobalLoading";
 import Background from "@/components/Background";
 import Piece from "@/components/Piece";
 import { useConst } from "@/hooks/useConst";
+import { usePlaySound } from "@/hooks/usePlaySound";
 import { SIZE } from "@/utils/chessUtils";
 import { timerFormat } from "@/utils/dateTimeFormat";
 import { Colors } from "@/constants/Colors";
@@ -40,6 +41,7 @@ export default function PlayOnline() {
   const token = useSelector(selectAccessToken);
   const user = useSelector(selectUser);
   const isLoading = useSelector(selectIsLoading);
+  const playSound = usePlaySound();
 
   const chess = useConst(() => new Chess());
   const [activeBoard, setActiveBoard] = useState<"waiting" | "active">(
@@ -66,6 +68,9 @@ export default function PlayOnline() {
     board: [],
   });
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null
+  );
   const [result, setResult] = useState<string | null>(null);
   const [showResignDialog, setShowResignDialog] = useState<boolean>(false);
   const [showDrawDialog, setShowDrawDialog] = useState<boolean>(false);
@@ -115,8 +120,14 @@ export default function PlayOnline() {
       });
       setWhiteTime(data.whiteTimeRemaining);
       setBlackTime(data.blackTimeRemaining);
-      if (data.lastMoveResult)
+      if (data.lastMoveResult) {
+        playSound(data.lastMoveResult.captured ? "captured" : "move");
         setMoveHistory((prev) => [...prev, data.lastMoveResult]);
+        setLastMove({
+          from: data.lastMoveResult.from,
+          to: data.lastMoveResult.to,
+        });
+      }
     });
 
     socketService.on("gameOver", (data) => {
@@ -349,8 +360,8 @@ export default function PlayOnline() {
             handleCloseDialog();
           }}
           onCancel={() => {
-            if (showConfirmDrawDialog)
-              socketService.emit("offerDraw", { gameId: Number(id) });
+            // if (showConfirmDrawDialog)
+            // socketService.emit("offerDraw", { gameId: Number(id) });
             handleCloseDialog();
           }}
         />
@@ -433,7 +444,10 @@ export default function PlayOnline() {
         }}
       >
         <View style={{ width, height: width }}>
-          <Background flip={side !== "" && side === "b"} />
+          <Background
+            flip={side !== "" && side === "b"}
+            lastMove={{ from: lastMove?.from, to: lastMove?.to }}
+          />
           {side !== "" && renderBoard}
         </View>
       </View>

@@ -4,7 +4,7 @@ import { backgroundTheme } from "@/constants/Colors";
 
 const initialState = {
   isAppSoundPlaying: false,
-  isBoardSoundPlaying: false,
+  isMoveSoundPlaying: false,
   theme: backgroundTheme[0].colors,
   showLegalMoves: true,
   showCoordinates: true,

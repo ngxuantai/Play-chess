@@ -30,9 +30,6 @@ import { usePlaySound } from "@/hooks/usePlaySound";
 
 const { width } = Dimensions.get("window");
 
-const moveSoundPath = require("../assets/sound/move.mp3");
-const captureSoundPath = require("../assets/sound/capture.mp3");
-
 export default function PlayWithBot() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -47,6 +44,9 @@ export default function PlayWithBot() {
     board: [] as (Piece | null)[][],
   });
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null
+  );
   const [result, setResult] = useState("");
   const [isResetDialogVisible, setResetDialogVisible] = useState(false);
   const [isChessResultModalVisible, setChessResultModalVisible] =
@@ -66,6 +66,14 @@ export default function PlayWithBot() {
           board: chess.board(),
         });
         setMoveHistory(history);
+        setLastMove(
+          history?.length > 0
+            ? {
+                from: history[history.length - 1].from,
+                to: history[history.length - 1].to,
+              }
+            : null
+        );
         setSidePickerVisible(false);
       } else {
         resetBoard(false);
@@ -82,24 +90,30 @@ export default function PlayWithBot() {
     try {
       const gameState = {
         board: chess.fen(),
-        history: chess.history({ verbose: true }),
+        history: moveHistory,
         side,
       };
       await AsyncStorage.setItem("gameState", JSON.stringify(gameState));
     } catch (error) {
       console.log("Failed to save game state:", error);
     }
-  }, [chess, side]);
+  }, [chess, side, moveHistory]);
 
   const checkGameState = useCallback(() => {
+    let result = null;
+
     if (chess.isCheckmate()) {
-      setResult(chess.turn() === "w" ? "lose" : "win");
-      setChessResultModalVisible(true);
+      result = chess.turn() === "w" ? "lose" : "win";
     } else if (chess.isDraw()) {
-      setResult("draw");
+      result = "draw";
+    }
+
+    if (result) {
+      setResult(result);
+      setLastMove(null);
       setChessResultModalVisible(true);
     }
-  }, [chess, side]);
+  }, [chess]);
 
   const resetBoard = useCallback(
     (isInitial = true) => {
@@ -111,6 +125,7 @@ export default function PlayWithBot() {
       setMoveHistory([]);
       setSide("");
       setSidePickerVisible(true);
+      setLastMove(null);
       if (isInitial) {
         AsyncStorage.removeItem("gameState").catch((error) =>
           console.log("Failed to delete game state", error)
@@ -138,11 +153,18 @@ export default function PlayWithBot() {
         player: chess.turn(),
         board: chess.board(),
       });
+      setLastMove({
+        from: move.from,
+        to: move.to,
+      });
       if (move.captured) {
-        playSound(captureSoundPath);
+        playSound("captured");
       } else {
-        playSound(moveSoundPath);
+        playSound("move");
       }
+      setTimeout(() => {
+        setPlayerMove(false);
+      });
       setTimeout(() => {
         checkGameState();
       }, 3000);
@@ -152,18 +174,22 @@ export default function PlayWithBot() {
 
   const makeBotMove = useCallback(() => {
     const bestMove = getBestMove(chess, 2, side === "w" ? false : true);
-    const movelog = chess.move(bestMove);
-    setMoveHistory((prev) => [...prev, movelog]);
+    const moveLog = chess.move(bestMove);
+    setMoveHistory((prev) => [...prev, moveLog]);
     setState({
       player: chess.turn(),
       board: chess.board(),
     });
-    if (movelog.captured) {
-      playSound(captureSoundPath);
+    if (moveLog.captured) {
+      playSound("captured");
     } else {
-      playSound(moveSoundPath);
+      playSound("move");
     }
-    if (movelog) {
+    if (moveLog) {
+      setLastMove({
+        from: moveLog.from,
+        to: moveLog.to,
+      });
       setTimeout(() => {
         checkGameState();
       }, 10000);
@@ -171,10 +197,16 @@ export default function PlayWithBot() {
   }, [chess, side, checkGameState]);
 
   useEffect(() => {
-    if (side !== "" && state.board.length > 0 && state.player !== side) {
+    if (
+      side !== "" &&
+      state.board.length > 0 &&
+      state.player !== side &&
+      !playerMove
+    ) {
+      setPlayerMove(true);
       makeBotMove();
     }
-  }, [state.board, makeBotMove, side, state.player]);
+  }, [state.board, makeBotMove, state.player, playerMove]);
 
   const renderBoard = useMemo(() => {
     if (state.board.length === 0) return null;
@@ -287,7 +319,10 @@ export default function PlayWithBot() {
         }}
       >
         <View style={{ width, height: width }}>
-          <Background flip={side !== "" && side === "b"} />
+          <Background
+            flip={side !== "" && side === "b"}
+            lastMove={{ from: lastMove?.from, to: lastMove?.to }}
+          />
           {side !== "" && renderBoard}
         </View>
       </View>
