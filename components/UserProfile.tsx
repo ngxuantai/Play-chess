@@ -65,6 +65,7 @@ const UserProfile = () => {
                 flexDirection: "column",
                 paddingHorizontal: 10,
                 gap: 10,
+                width: "70%",
               }}
             >
               <View
@@ -191,12 +192,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   userNameText: {
-    maxWidth: "70%",
+    maxWidth: "80%",
     fontSize: 20,
     fontWeight: "bold",
   },
   text: {
-    maxWidth: "80%",
+    maxWidth: "100%",
     fontSize: 16,
     fontWeight: 500,
   },

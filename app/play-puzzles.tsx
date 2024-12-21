@@ -14,9 +14,10 @@ import React, {
   useRef,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { stopLoading } from "@/redux/slices/loadingSlice";
+import { startLoading, stopLoading } from "@/redux/slices/loadingSlice";
 import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { puzzleApi } from "@/api/puzzle.api";
 import GlobalLoading from "@/components/GlobalLoading";
 import UndoModal from "@/components/UndoModal";
 import Background from "@/components/Background";
@@ -38,9 +39,9 @@ export default function PlayPuzzles() {
   const playSound = usePlaySound();
   const isLoading = useSelector(selectIsLoading);
 
-  const fen = "q3k1nr/1pp1nQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 b k - 0 17";
-  const moves = ["e8d7", "a2e6", "d7d8", "f7f8"];
-
+  const [idPuzzle, setIdPuzzle] = useState<string | null>(null);
+  const [fen, setFen] = useState(null);
+  const [moves, setMoves] = useState<string[]>([]);
   const [side, setSide] = useState<"w" | "b">("w");
   const [state, setState] = useState({
     player: "",
@@ -55,6 +56,23 @@ export default function PlayPuzzles() {
   const [showHint, setShowHint] = useState(false);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const fetchData = async () => {
+    try {
+      const response = await puzzleApi.getRandomPuzzles();
+      setIdPuzzle(response.data.id);
+      setFen(response.data.fen);
+      setMoves(response.data.moves.split(" "));
+    } catch (error) {
+      console.log("Error fetching puzzles:", error);
+    } finally {
+      dispatch(stopLoading());
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const startAnimation = () => {
@@ -75,36 +93,35 @@ export default function PlayPuzzles() {
     };
 
     startAnimation();
-  }, [scaleAnim, state.player]);
+  });
 
-  const handleTimer = useCallback(() => {
+  useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
 
-    const updateTimer = () => {
-      if (state.player === side) {
+    if (state.player === side) {
+      timer = setInterval(() => {
         setTime((prev) => Math.max(prev + 1, 0));
-      }
-    };
-    timer = setInterval(updateTimer, 1000);
+      }, 1000);
+    }
 
     return () => {
-      if (timer) clearInterval(timer);
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
     };
   }, [side, state.player]);
 
   useEffect(() => {
-    const cleanup = handleTimer();
-    return cleanup;
-  }, [handleTimer]);
-
-  useEffect(() => {
-    chess.load(fen);
-    setSide(chess.turn() === "w" ? "b" : "w");
-    setState({
-      player: chess.turn(),
-      board: chess.board(),
-    });
-  }, []);
+    if (fen) {
+      chess.load(fen);
+      setState({
+        player: chess.turn(),
+        board: chess.board(),
+      });
+      setSide(chess.turn() === "w" ? "b" : "w");
+    }
+  }, [fen]);
 
   const onTurn = useCallback(
     (move: Move) => {
@@ -116,19 +133,19 @@ export default function PlayPuzzles() {
       }
       const moveLog = chess.move(move);
       if (moveLog) {
+        setState({
+          player: chess.turn(),
+          board: chess.board(),
+        });
+        setShowHint(false);
         setLastMove({
           from: moveLog.from,
           to: moveLog.to,
         });
         playSound(moveLog.captured ? "captured" : "move");
       }
-      setState({
-        player: chess.turn(),
-        board: chess.board(),
-      });
-      setShowHint(false);
     },
-    [chess, state.player]
+    [chess, moveIndex, moves]
   );
 
   const renderBoard = useMemo(() => {
@@ -154,7 +171,7 @@ export default function PlayPuzzles() {
         );
       })
     );
-  }, [state.board, side, chess, state.player]);
+  }, [state.board, side, chess, moveIndex, moves]);
 
   const handleUndo = useCallback(() => {
     chess.load(fen);
@@ -166,7 +183,7 @@ export default function PlayPuzzles() {
     setTime(0);
     setLastMove(null);
     setIsMoveCorrect(true);
-  }, [chess]);
+  }, [chess, fen]);
 
   const handleMove = useCallback(() => {
     if (
@@ -179,21 +196,28 @@ export default function PlayPuzzles() {
       const timerId = setTimeout(() => {
         const moveLog = chess.move(moves[moveIndex]);
         if (moveLog) {
+          setState({
+            player: chess.turn(),
+            board: chess.board(),
+          });
           setLastMove({
             from: moveLog.from,
             to: moveLog.to,
           });
           playSound(moveLog.captured ? "captured" : "move");
+          setMoveIndex((prev) => prev + 1);
         }
-        setState({
-          player: chess.turn(),
-          board: chess.board(),
-        });
-        setMoveIndex((prev) => prev + 1);
       }, 2000);
       return timerId;
     }
   }, [state.board, state.player, isMoveCorrect, moveIndex]);
+
+  useEffect(() => {
+    const timerId = handleMove();
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [handleMove]);
 
   const handleMoveHint = useCallback(() => {
     if (moveIndex < moves.length) {
@@ -214,12 +238,22 @@ export default function PlayPuzzles() {
     }
   }, [moveIndex]);
 
-  useEffect(() => {
-    const timerId = handleMove();
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
-  }, [handleMove]);
+  const resetData = () => {
+    setMoveIndex(0);
+    setTime(0);
+    setLastMove(null);
+    setIsMoveCorrect(true);
+    setShowHint(false);
+    setFen(null);
+    setMoves([]);
+  };
+
+  const handleNextPuzzle = useCallback(async () => {
+    dispatch(startLoading("Đang tải câu đố tiếp theo"));
+    resetData();
+    await puzzleApi.postPuzzleCompleted(idPuzzle as string);
+    await fetchData();
+  }, [idPuzzle]);
 
   const circlePosition = useMemo(() => {
     if (moveIndex >= moves.length) return { x: 0, y: 0 };
@@ -246,7 +280,10 @@ export default function PlayPuzzles() {
           <UndoModal
             visible={!isMoveCorrect}
             onUndo={handleUndo}
-            onNext={() => setIsMoveCorrect(true)}
+            onNext={() => {
+              setIsMoveCorrect(true);
+              handleNextPuzzle();
+            }}
           />
         </View>
         <View style={styles.titleContainer}>
@@ -335,7 +372,7 @@ export default function PlayPuzzles() {
         {moveIndex >= moves.length && (
           <TouchableOpacity
             style={[styles.button, styles.buttonNext]}
-            onPress={() => {}}
+            onPress={() => handleNextPuzzle()}
           >
             <Text style={[styles.buttonText, { color: "white" }]}>
               Câu tiếp theo
@@ -401,6 +438,7 @@ const styles = StyleSheet.create({
     color: Colors.BLACK,
   },
   button: {
+    marginTop: 10,
     height: 50,
     marginHorizontal: "auto",
     paddingHorizontal: 18,
