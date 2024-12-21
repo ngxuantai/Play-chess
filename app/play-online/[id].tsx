@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Chess, Move } from "chess.js";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { useSelector, useDispatch } from "react-redux";
 import {
   View,
@@ -37,6 +37,7 @@ const { width } = Dimensions.get("window");
 export default function PlayOnline() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const token = useSelector(selectAccessToken);
   const user = useSelector(selectUser);
@@ -196,6 +197,12 @@ export default function PlayOnline() {
     const cleanup = handleTimer();
     return cleanup;
   }, [handleTimer]);
+
+  useEffect(() => {
+    if (whiteTime === 0 || blackTime === 0) {
+      socketService.emit("checkTime", { gameId: Number(id) });
+    }
+  }, [whiteTime, blackTime]);
 
   const onTurn = useCallback(
     (move: Move) => {
@@ -375,7 +382,10 @@ export default function PlayOnline() {
           }
           onExit={() => {
             setShowChessResultModal(false);
-            router.back();
+            navigation.reset({
+              index: 1,
+              routes: [{ name: "index" }, { name: "room-list" }],
+            });
           }}
           // onPlayAgain={() => {
           //   setShowChessResultModal(false);
@@ -540,6 +550,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: Colors.LIGHTBLUE,
     width: "75%",
+    overflow: "hidden",
   },
   statusText: {
     padding: 4,

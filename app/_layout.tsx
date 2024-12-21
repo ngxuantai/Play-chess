@@ -85,6 +85,14 @@ export default function RootLayout() {
           name="settings"
           options={{ title: "Cài đặt" }}
         />
+        <Stack.Screen
+          name="history-list"
+          options={{ title: "Lịch sử đấu" }}
+        />
+        <Stack.Screen
+          name="game-history/[id]"
+          options={{ title: "Chi tiết ván đấu" }}
+        />
       </Stack>
     </Provider>
   );

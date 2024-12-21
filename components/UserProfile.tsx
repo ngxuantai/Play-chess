@@ -37,72 +37,97 @@ const UserProfile = () => {
   return (
     <View style={styles.profileContainer}>
       {isAuthenticated ? (
-        <View style={styles.infoContainer}>
-          <View>
-            <ChangeUserInfoModal
-              visible={changeUserInfoModalVisible}
-              setVisible={setChangeUserInfoModalVisible}
-              onSave={() => handleUserInfoChange()}
-            />
-          </View>
-          <View
-            style={{
-              width: "30%",
-              alignItems: "center",
-            }}
-          >
+        <>
+          <View style={styles.infoContainer}>
             <View>
-              <Icon
-                name="account-circle"
-                size={70}
-                color={Colors.DARKBLUE}
+              <ChangeUserInfoModal
+                visible={changeUserInfoModalVisible}
+                setVisible={setChangeUserInfoModalVisible}
+                onSave={() => handleUserInfoChange()}
               />
             </View>
-          </View>
-          <View
-            style={{
-              flexDirection: "column",
-              paddingHorizontal: 10,
-              gap: 10,
-            }}
-          >
             <View
               style={{
-                display: "flex",
-                flexDirection: "row",
+                width: "30%",
                 alignItems: "center",
               }}
             >
+              <View>
+                <Icon
+                  name="account-circle"
+                  size={70}
+                  color={Colors.DARKBLUE}
+                />
+              </View>
+            </View>
+            <View
+              style={{
+                flexDirection: "column",
+                paddingHorizontal: 10,
+                gap: 10,
+              }}
+            >
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.userNameText}
+                >
+                  {user?.username}
+                </Text>
+                <TouchableOpacity
+                  style={{ marginLeft: 10 }}
+                  onPress={() => {
+                    setChangeUserInfoModalVisible(true);
+                  }}
+                >
+                  <Icon
+                    name="square-edit-outline"
+                    size={30}
+                    color={Colors.DARKBLUE}
+                  />
+                </TouchableOpacity>
+              </View>
               <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
-                style={styles.userNameText}
+                style={styles.text}
               >
-                {user?.username}
+                Email: {user?.email}
               </Text>
-              <TouchableOpacity
-                style={{ marginLeft: 10 }}
-                onPress={() => {
-                  setChangeUserInfoModalVisible(true);
-                }}
-              >
-                <Icon
-                  name="square-edit-outline"
-                  size={30}
-                  color={Colors.DARKBLUE}
-                />
-              </TouchableOpacity>
+              <Text style={styles.text}>Cấp độ: {user?.rating}</Text>
             </View>
-            <Text style={styles.text}>Email: {user?.email}</Text>
-            <Text style={styles.text}>Cấp độ: {user?.rating}</Text>
+          </View>
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "row",
+              justifyContent: "space-around",
+              marginTop: 20,
+            }}
+          >
+            <TouchableOpacity style={styles.button}>
+              <Text
+                style={styles.buttonText}
+                onPress={() => router.push("/history-list")}
+              >
+                Lịch sử đấu
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
-              style={styles.button}
+              style={[styles.button, { backgroundColor: "#F96F6B" }]}
               onPress={handleLogout}
             >
-              <Text style={styles.buttonText}>Đăng xuất</Text>
+              <Text style={[styles.buttonText]}>Đăng xuất</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </>
       ) : (
         <>
           <View style={styles.avatarContainer}>
@@ -171,6 +196,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   text: {
+    maxWidth: "80%",
     fontSize: 16,
     fontWeight: 500,
   },
@@ -181,7 +207,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginVertical: 10,
     elevation: 6,
-    width: "70%",
+    width: "40%",
   },
   buttonText: {
     fontSize: 14,

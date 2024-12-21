@@ -11,3 +11,17 @@ export const formatMinsToHour = (mins: number) => {
   const minutes = mins % 60;
   return `${hours}:${minutes}`;
 };
+
+export const formatDateTimeVN = (dateStr: string) => {
+  const date = new Date(dateStr);
+
+  const options = {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  };
+
+  return new Intl.DateTimeFormat("vi-VN", options).format(date);
+};

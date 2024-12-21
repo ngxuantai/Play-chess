@@ -378,6 +378,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     borderRadius: 10,
     marginVertical: 10,
+    overflow: "hidden",
   },
   currentPlayer: {
     backgroundColor: Colors.LIGHTBLUE,

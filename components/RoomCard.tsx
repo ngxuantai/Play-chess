@@ -108,12 +108,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    borderRadius: "100%",
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: Colors.DARKBLUE,
     padding: 8,
     elevation: 10,
+    overflow: "hidden",
   },
 });
 

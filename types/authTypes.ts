@@ -26,3 +26,8 @@ export interface PlayerInfo {
   id?: number | null;
   username?: string | null;
 }
+
+export interface PlayerInforHistory extends PlayerInfo {
+  rating: number;
+  color: "w" | "b";
+}

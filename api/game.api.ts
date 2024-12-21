@@ -21,4 +21,24 @@ export const gameApi = {
       throw error.response.data;
     }
   },
+
+  getListCompletedGames: async () => {
+    try {
+      const response = await axiosInstance.get("/games/completed");
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
+  },
+
+  getGameById: async (id: number) => {
+    try {
+      const response = await axiosInstance.get(`/games/${id}`);
+      return response;
+    } catch (error: any) {
+      console.log("Error:", error);
+      throw error.response.data;
+    }
+  },
 };
