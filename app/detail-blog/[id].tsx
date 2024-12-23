@@ -1,37 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, ScrollView } from "react-native";
+import { blogApi } from "@/api/blog.api";
 import Markdown from "react-native-markdown-display";
 
 const DetailBlog = () => {
-  const markdownContent = `
-# Welcome to My Blog 🎉
+  const { id } = useLocalSearchParams();
+  const [data, setData] = useState<any>(null);
 
-## Why Blogging is Important?
+  const fetchBlog = async () => {
+    const response = await blogApi.getBlogById(id);
+    return response.data;
+  };
 
-Blogging helps you share knowledge, build a portfolio, and connect with like-minded people.
-
-> "Blogging is not about publishing as much as you can. It’s about publishing as smart as you can." – Jon Morrow
-
-Here is some code:
-
-\`\`\`javascript
-function sayHello() {
-  console.log("Hello, Blog!");
-}
-\`\`\`
-
-### Things to Remember:
-. Write consistently.
-. Be authentic.
-. Always add value.
-
-**Enjoy blogging!**
-
-`;
+  useEffect(() => {
+    fetchBlog().then((data) => {
+      setData(data);
+    });
+  }, []);
 
   return (
-    <ScrollView>
-      <Markdown style={markdownStyles}>{markdownContent}</Markdown>
+    <ScrollView style={styles.container}>
+      {data?.content && (
+        <Markdown style={markdownStyles}>{data.content}</Markdown>
+      )}
     </ScrollView>
   );
 };
@@ -39,51 +31,54 @@ function sayHello() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: "#f4f4f4",
+    paddingBottom: 10,
+    backgroundColor: "#f9f9f9",
     flexGrow: 1,
   },
 });
 
 const markdownStyles = {
   body: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    lineHeight: 24,
     color: "#333",
+    fontSize: 16,
   },
+  // paragraph: {
+  //   marginBottom: 10,
+  //   flexWrap: "wrap",
+  //   flexDirection: "row",
+  //   alignItems: "flex-start",
+  //   justifyContent: "flex-start",
+  // },
   heading1: {
     fontSize: 32,
     fontWeight: "bold",
     color: "#2a2a2a",
-    marginBottom: 16,
+    marginBottom: 12,
     borderBottomWidth: 2,
     borderBottomColor: "#ddd",
     paddingBottom: 8,
   },
   heading2: {
     fontSize: 28,
-    fontWeight: "600",
-    color: "#3c3c3c",
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    paddingBottom: 6,
+    fontWeight: "bold",
+    color: "#2a2a2a",
+    marginBottom: 8,
   },
   heading3: {
     fontSize: 24,
-    fontWeight: "600",
-    color: "#555",
-    marginBottom: 10,
+    fontWeight: "bold",
+    color: "#2a2a2a",
+    marginBottom: 8,
   },
-  text: {
-    fontSize: 16,
-    lineHeight: 26,
-    color: "#444",
-    marginBottom: 12,
+  heading4: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#2a2a2a",
+    marginBottom: 8,
   },
   link: {
-    color: "#1e90ff",
-    textDecorationLine: "underline",
+    color: "#0366d6",
+    textDecorationLine: "none",
   },
   strong: {
     fontWeight: "bold",
@@ -96,7 +91,7 @@ const markdownStyles = {
     borderLeftWidth: 4,
     borderLeftColor: "#ccc",
     paddingLeft: 16,
-    marginVertical: 12,
+    marginBottom: 12,
     fontStyle: "italic",
     color: "#666",
   },
@@ -130,11 +125,7 @@ const markdownStyles = {
     marginBottom: 12,
   },
   image: {
-    borderRadius: 8,
-    marginVertical: 16,
-    width: "100%",
-    height: 200,
-    resizeMode: "cover",
+    resizeMode: "contain",
   },
 };
 

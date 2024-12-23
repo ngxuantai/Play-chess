@@ -1,111 +1,92 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Divider } from "react-native-paper";
-import { formatMinsToHour } from "@/utils/dateTimeFormat";
+import { format } from "date-fns";
+
+interface Blog {
+  blogId: string;
+  title: string;
+  content: string;
+  time: string;
+}
 
 type BlogCardProps = {
-  blogInfo: {
-    blogId: string;
-    title: string;
-    subtitle: string;
-    ownerName: string;
-    avatar: any;
-    thumbnail: any;
-    time: string;
-  };
-  onReadBlog: () => void;
+  blogInfo: Blog;
 };
 
-const BlogCard = ({ blogInfo, onReadBlog }: BlogCardProps) => {
-  return (
-    <View style={styles.card}>
-      <View style={styles.contentContainer}>
-        <View style={styles.content}>
-          <View style={styles.info}>
-            <Image
-              source={blogInfo.avatar}
-              style={styles.avatar}
-            />
-            <Text style={styles.ownerName}>{blogInfo.ownerName}</Text>
-          </View>
-          <Text style={styles.title}>{blogInfo.title}</Text>
-          <Text
-            numberOfLines={2}
-            ellipsizeMode="tail"
-            style={styles.subtitle}
-          >
-            {blogInfo.subtitle}
-          </Text>
-        </View>
+const BlogCard = ({ blogInfo }: BlogCardProps) => {
+  const router = useRouter();
 
+  const [imageLink, setImageLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    const imageRegex = /!\[.*?\]\((.*?)\)/;
+    const imageMatch = blogInfo.content.match(imageRegex);
+    if (imageMatch) {
+      setImageLink(imageMatch[1]);
+    }
+  }, [blogInfo.content]);
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd-MM-yyyy");
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/detail-blog/${blogInfo.blogId}`)}
+    >
+      {imageLink && (
         <Image
-          source={blogInfo.thumbnail}
+          source={{ uri: imageLink }}
           style={styles.thumbnail}
         />
-      </View>
+      )}
+      <Text
+        style={styles.title}
+        ellipsizeMode="tail"
+        numberOfLines={3}
+      >
+        {blogInfo.title}
+      </Text>
       <View style={styles.statistics}>
         <View style={{ flexDirection: "row", gap: 5 }}>
           <Icon
-            name="star-four-points"
+            name="calendar"
             size={20}
-            color={Colors.HIGHLIGHT}
+            color={Colors.BLACK}
           />
-          <Text style={styles.statisticText}>{blogInfo.time}</Text>
-        </View>
-        <View style={{ flexDirection: "row", gap: 5 }}>
-          <Icon
-            name="thumb-up-outline"
-            size={20}
-            color={Colors.DARKBLUE}
-          />
-          <Text style={styles.statisticText}>2.5K</Text>
-        </View>
-        <View style={{ flexDirection: "row", gap: 5 }}>
-          <Icon
-            name="comment"
-            size={20}
-            color={Colors.DARKBLUE}
-          />
-          <Text style={styles.statisticText}>1028</Text>
+          <Text style={styles.statisticText}>{formatDate(blogInfo.time)}</Text>
         </View>
       </View>
       <Divider />
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
     flexDirection: "column",
-    padding: 20,
-    gap: 15,
-  },
-  contentContainer: {
-    flexDirection: "row",
-    width: "100%",
-  },
-  content: {
-    flexDirection: "column",
-    gap: 10,
-    width: "70%",
-  },
-  info: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  ownerName: {
-    fontSize: 14,
-    color: Colors.BLACK,
-  },
-  avatar: {
-    width: 20,
-    height: 20,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    padding: 10,
+    gap: 8,
     borderRadius: 10,
+    backgroundColor: "white",
+    shadowColor: Colors.BLACK,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   title: {
+    width: "100%",
     fontSize: 22,
     fontWeight: "bold",
     color: Colors.BLACK,
@@ -116,8 +97,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   thumbnail: {
-    width: 100,
-    height: 120,
+    width: "100%",
+    height: 180,
     borderRadius: 10,
   },
   infoText: {
@@ -126,12 +107,11 @@ const styles = StyleSheet.create({
   },
   statistics: {
     flexDirection: "row",
-    gap: 15,
+    justifyContent: "flex-end",
   },
   statisticText: {
     fontSize: 14,
     color: Colors.BLACK,
-    opacity: 0.5,
   },
 });
 
