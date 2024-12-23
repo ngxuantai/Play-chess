@@ -3,6 +3,8 @@ import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, ScrollView } from "react-native";
 import { blogApi } from "@/api/blog.api";
 import Markdown from "react-native-markdown-display";
+import CommentsSection from "@/components/CommentsSection";
+import { Comment } from "@/types/commentTypes";
 
 const DetailBlog = () => {
   const { id } = useLocalSearchParams();
@@ -19,10 +21,53 @@ const DetailBlog = () => {
     });
   }, []);
 
+  const sampleComments: Comment[] = [
+    {
+      id: "1",
+      text: "If we're all living and dying honestly, companies hire for three reasons: skills, presentation, and credibility.",
+      user: { id: 1, username: "Nick Lawrence" },
+    },
+    {
+      id: "2",
+      text: "Another main comment from User2",
+      user: { id: 2, username: "zzz" },
+    },
+    {
+      id: "3",
+      idParentCmt: "1",
+      text: "Hey thanks for sharing! I agree with your thoughts and you're spot on about going too deep into projects in a portfolio. Most of the time, any valuable information is under NDA or just wouldn't be shared out of the designer's own wish for privacy.",
+      user: {
+        id: 3,
+        username: "User3",
+      },
+    },
+    {
+      id: "4",
+      idParentCmt: "2",
+      text: "Reply to comment 2 from User4",
+      user: {
+        id: 4,
+        username: "User4",
+      },
+    },
+    {
+      id: "5",
+      idParentCmt: "1",
+      text: "Another reply to comment 1 from User5",
+      user: {
+        id: 5,
+        username: "User5",
+      },
+    },
+  ];
+
   return (
     <ScrollView style={styles.container}>
       {data?.content && (
-        <Markdown style={markdownStyles}>{data.content}</Markdown>
+        <>
+          <Markdown style={markdownStyles}>{data.content}</Markdown>
+          <CommentsSection initialComments={sampleComments} />
+        </>
       )}
     </ScrollView>
   );
