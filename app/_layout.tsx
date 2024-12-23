@@ -93,6 +93,10 @@ export default function RootLayout() {
           name="game-history/[id]"
           options={{ title: "Chi tiết ván đấu" }}
         />
+        <Stack.Screen
+          name="blog-list"
+          options={{ headerShown: false }}
+        />
       </Stack>
     </Provider>
   );

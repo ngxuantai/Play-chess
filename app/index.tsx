@@ -27,6 +27,15 @@ export default function index() {
       colors={[Colors.LIGHTBLUE, Colors.DARKBLUE]}
       style={styles.container}
     >
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.push("/settings")}>
+          <Icon
+            name="cog"
+            size={34}
+            color={Colors.DARKBLUE}
+          />
+        </TouchableOpacity>
+      </View>
       <View style={styles.logoContainer}>
         <Image
           source={require("../assets/images/welcome-image.png")}
@@ -77,10 +86,10 @@ export default function index() {
           }}
         />
         <GameButton
-          icon="cog"
-          text="Cài đặt"
+          icon="newspaper-variant-outline"
+          text="Blog"
           onPress={() => {
-            router.push("/settings");
+            router.push("/blog-list");
           }}
         />
       </View>
@@ -116,6 +125,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     padding: 20,
     justifyContent: "space-between",
+  },
+  header: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 10,
   },
   logoContainer: {
     alignItems: "center",
