@@ -97,6 +97,10 @@ export default function RootLayout() {
           name="blog-list"
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="detail-blog/[id]"
+          options={{ title: "Bài viết" }}
+        />
       </Stack>
     </Provider>
   );

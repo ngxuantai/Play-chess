@@ -73,8 +73,9 @@ export default function index() {
           icon="robot"
           text="Chơi với Máy tính"
           onPress={() => {
-            dispatch(startLoading("Đang tạo bàn cờ"));
-            router.push("/play-with-bot");
+            // dispatch(startLoading("Đang tạo bàn cờ"));
+            // router.push("/play-with-bot");
+            router.push("/detail-blog/1");
           }}
         />
         <GameButton
