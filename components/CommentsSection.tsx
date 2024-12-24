@@ -1,70 +1,162 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
-  Button,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import { Comment } from "@/types/commentTypes";
 import { useSelector } from "react-redux";
 import { selectAuth } from "@/redux/selectors/authSelectors";
+import { blogApi } from "@/api/blog.api";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { formatDateTimeVN } from "@/utils/dateTimeFormat";
 
 interface CommentsSectionProps {
-  initialComments: Comment[];
+  idBlog: number;
+  countComments: () => void;
 }
 
 const CommentsSection: React.FC<CommentsSectionProps> = ({
-  initialComments,
+  idBlog,
+  countComments,
 }) => {
   const { user, isAuthenticated } = useSelector(selectAuth);
   const router = useRouter();
-  const { redirectTo } = useLocalSearchParams();
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState<string>("");
   const [replyText, setReplyText] = useState<string>("");
   const [activeCommentIds, setActiveCommentIds] = useState<string[]>([]);
   const [activeReplyInputId, setActiveReplyInputId] = useState<string | null>(
     null
   );
+  const [loadingNewComment, setLoadingNewComment] = useState<boolean>(false);
+  const [loadingReplyComment, setLoadingReplyComment] =
+    useState<boolean>(false);
+
+  const fetchListComments = async () => {
+    const response = await blogApi.getListComments(idBlog);
+    setComments(response.data);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchListComments();
+    }
+  }, [isAuthenticated]);
+
+  const handleLikeComment = (id: number, parentId?: number) => {
+    console.log("Like comment:", id);
+    blogApi
+      .likeComment(id)
+      .then((response) => {
+        setComments((prevComments) =>
+          prevComments.map((cmt) => {
+            if (parentId) {
+              return {
+                ...cmt,
+                replies: cmt.replies.map((reply: any) =>
+                  reply.id === id
+                    ? {
+                        ...reply,
+                        liked: response.data.liked,
+                        likesCount: response.data.liked
+                          ? reply.likesCount + 1
+                          : reply.likesCount - 1,
+                      }
+                    : reply
+                ),
+              };
+            } else {
+              return cmt.id === id
+                ? {
+                    ...cmt,
+                    liked: response.data.liked,
+                    likesCount: response.data.liked
+                      ? cmt.likesCount + 1
+                      : cmt.likesCount - 1,
+                  }
+                : cmt;
+            }
+          })
+        );
+      })
+      .catch((error) => {
+        console.log("Error liking comment:", error);
+      });
+  };
 
   const handleComment = () => {
     if (!newCommentText.trim()) return;
+    setLoadingNewComment(true);
 
-    const newComment: Comment = {
-      id: Math.random().toString(), // Generate unique ID (use a better method in production)
-      text: newCommentText,
-      user: {
-        id: user?.id ?? 0,
-        username: user?.username || "Anonymous",
-      },
-    };
-
-    setComments((prevComments) => [...prevComments, newComment]);
-    setNewCommentText("");
+    blogApi
+      .commentBlog(idBlog, newCommentText)
+      .then((response) => {
+        const newComment = {
+          id: response.data.id,
+          content: response.data.content,
+          updatedAt: response.data.updatedAt,
+          parentId: response.data.parentId,
+          author: {
+            id: user?.id,
+            username: user?.username,
+          },
+          replies: [],
+          likesCount: 0,
+        };
+        setComments((prevComments) => [...prevComments, newComment]);
+        countComments();
+        setNewCommentText("");
+        setLoadingNewComment(false);
+      })
+      .catch((error) => {
+        console.log("Error commenting blog:", error);
+        setLoadingNewComment(false);
+      });
   };
 
-  const handleReply = (id: string) => {
+  const handleReply = (item: any) => {
     if (!replyText.trim()) return;
+    setLoadingReplyComment(true);
 
-    const newComment: Comment = {
-      id: Math.random().toString(), // Generate unique ID (use a better method in production)
-      idParentCmt: id,
-      text: replyText,
-      user: {
-        id: user?.id ?? 0,
-        username: user?.username || "Anonymous",
-      },
-    };
-
-    setComments((prevComments) => [...prevComments, newComment]);
-    setReplyText("");
-    setActiveReplyInputId(null);
+    blogApi
+      .commentBlog(idBlog, replyText, item.id)
+      .then((response) => {
+        const newReply = {
+          id: response.data.id,
+          content: response.data.content,
+          updatedAt: response.data.updatedAt,
+          parentId: response.data.parentId,
+          author: {
+            id: user?.id,
+            username: user?.username,
+          },
+          replies: [],
+          likesCount: 0,
+        };
+        setComments((prevComments) =>
+          prevComments.map((cmt) =>
+            cmt.id === item.id
+              ? { ...cmt, replies: [...cmt.replies, newReply] }
+              : cmt
+          )
+        );
+        countComments();
+        setReplyText("");
+        setActiveReplyInputId(null);
+        setLoadingReplyComment(false);
+        setActiveCommentIds((prevIds) =>
+          prevIds.includes(item.id) ? prevIds : [...prevIds, item.id]
+        );
+      })
+      .catch((error) => {
+        console.log("Error replying comment:", error);
+        setLoadingReplyComment(false);
+      });
   };
 
   const toggleCommentReplies = (id: string) => {
@@ -75,34 +167,48 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     );
   };
 
-  const renderReplies = (parentId: string) => {
-    return comments
-      .filter((comment) => comment.idParentCmt === parentId)
-      .map((reply) => (
-        <View
-          key={reply.id}
-          style={styles.replyContainer}
-        >
-          <View style={styles.infoContainer}>
-            <Icon
-              name="account"
-              size={30}
-              color={Colors.LIGHTBLUE}
-              style={styles.avatar}
-            />
-            <View>
-              <Text style={styles.usernameText}>{reply.user.username}</Text>
-              <Text style={styles.time}>about 2 years ago</Text>
-            </View>
+  const renderReplies = (replyComments: any[]) => {
+    return replyComments.map((reply) => (
+      <View
+        key={reply.id}
+        style={styles.replyContainer}
+      >
+        <View style={styles.infoContainer}>
+          <Icon
+            name="account"
+            size={30}
+            color={Colors.LIGHTBLUE}
+            style={styles.avatar}
+          />
+          <View>
+            <Text style={styles.usernameText}>{reply.author?.username}</Text>
+            <Text style={styles.time}>{formatDateTimeVN(reply.updatedAt)}</Text>
           </View>
-          <Text style={styles.text}>{reply.text}</Text>
         </View>
-      ));
+        <Text style={styles.text}>{reply.content}</Text>
+        <View style={styles.statisticContainer}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", gap: 5 }}
+            onPress={() => handleLikeComment(reply.id, reply.parentId)}
+          >
+            <Icon
+              name={reply.likesCount > 0 ? "thumb-up" : "thumb-up-outline"}
+              size={20}
+              color={Colors.DARKBLUE}
+            />
+            <Text style={styles.statisticText}>{reply.likesCount}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ));
   };
 
-  const renderComment = ({ item }: { item: Comment }) => {
+  const renderComment = ({ item }: { item: any }) => {
     return (
-      <View style={styles.commentContainer}>
+      <View
+        key={item.id}
+        style={styles.commentContainer}
+      >
         <View style={styles.infoContainer}>
           <Icon
             name="account"
@@ -111,8 +217,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             style={styles.avatar}
           />
           <View>
-            <Text style={styles.usernameText}>{item.user.username}</Text>
-            <Text style={styles.time}>about 2 years ago</Text>
+            <Text style={styles.usernameText}>{item.author?.username}</Text>
+            <Text style={styles.time}>{formatDateTimeVN(item.updatedAt)}</Text>
           </View>
         </View>
         <View style={styles.contentContainer}>
@@ -121,10 +227,21 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             ellipsizeMode="tail"
             style={styles.text}
           >
-            {item.text}
+            {item.content}
           </Text>
         </View>
         <View style={styles.statisticContainer}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", gap: 5 }}
+            onPress={() => handleLikeComment(item.id)}
+          >
+            <Icon
+              name={item.liked > 0 ? "thumb-up" : "thumb-up-outline"}
+              size={20}
+              color={Colors.DARKBLUE}
+            />
+            <Text style={styles.statisticText}>{item.likesCount}</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={{ flexDirection: "row", gap: 5 }}
             onPress={() => toggleCommentReplies(item.id)}
@@ -135,9 +252,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
               color={Colors.DARKBLUE}
             />
             <Text style={styles.statisticText}>
-              {activeCommentIds.includes(item.id)
-                ? "Ẩn phản hồi"
-                : "Xem phản hồi"}
+              {item.replies.length} phản hồi
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -161,7 +276,9 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
-        {activeCommentIds.includes(item.id) && renderReplies(item.id)}
+        {activeCommentIds.includes(item.id) &&
+          item.replies.length > 0 &&
+          renderReplies(item.replies)}
         {activeReplyInputId === item.id && isAuthenticated && (
           <View style={styles.replyInputContainer}>
             <TextInput
@@ -170,12 +287,16 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
               value={replyText}
               onChangeText={setReplyText}
             />
-            <TouchableOpacity onPress={() => handleReply(item.id)}>
-              <Icon
-                name="send-outline"
-                size={20}
-                color={Colors.DARKBLUE}
-              />
+            <TouchableOpacity onPress={() => handleReply(item)}>
+              {loadingReplyComment ? (
+                <ActivityIndicator size={20} />
+              ) : (
+                <Icon
+                  name="send-outline"
+                  size={20}
+                  color={Colors.DARKBLUE}
+                />
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -185,10 +306,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bình luận (12)</Text>
       {!isAuthenticated ? (
         <Text
-          style={{ fontSize: 14, textAlign: "center", paddingVertical: 20 }}
+          style={{
+            fontSize: 14,
+            textAlign: "center",
+            paddingVertical: 20,
+            marginBottom: 20,
+          }}
         >
           Vui lòng{" "}
           <Text
@@ -196,43 +321,41 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             onPress={() =>
               router.push({
                 pathname: "/login",
-                params: {
-                  redirectTo: redirectTo,
-                },
               })
             }
           >
             Đăng nhập
           </Text>{" "}
-          để bình luận
+          để xem bình luận
         </Text>
       ) : (
-        <View style={styles.replyInputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Viết bình luận..."
-            value={newCommentText}
-            onChangeText={setNewCommentText}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              handleComment();
-            }}
-          >
-            <Icon
-              name="send-outline"
-              size={20}
-              color={Colors.DARKBLUE}
+        <>
+          <View style={styles.replyInputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Viết bình luận..."
+              value={newCommentText}
+              onChangeText={setNewCommentText}
             />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={() => {
+                handleComment();
+              }}
+            >
+              {loadingNewComment ? (
+                <ActivityIndicator size={20} />
+              ) : (
+                <Icon
+                  name="send-outline"
+                  size={20}
+                  color={Colors.DARKBLUE}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+          {comments.map((comment) => renderComment({ item: comment }))}
+        </>
       )}
-
-      <FlatList
-        data={comments.filter((comment) => !comment.idParentCmt)}
-        keyExtractor={(item) => item.id}
-        renderItem={renderComment}
-      />
     </View>
   );
 };
@@ -240,8 +363,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
   },
   title: {
     fontSize: 20,
@@ -249,7 +370,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   commentContainer: {
-    padding: 10,
+    margin: 10,
+    paddingBottom: 20,
     gap: 15,
   },
   infoContainer: {
@@ -278,7 +400,8 @@ const styles = StyleSheet.create({
   statisticContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 20,
+    // justifyContent: "space-between",
+    gap: 30,
   },
   statisticText: {
     fontSize: 14,

@@ -8,6 +8,8 @@ interface Blog {
   title: string;
   content: string;
   time: string;
+  likes: number;
+  comments: number;
 }
 
 export default function BlogList() {
@@ -18,10 +20,12 @@ export default function BlogList() {
     setBlogs(() =>
       response.data.map((blog: any) => {
         return {
-          blogId: blog.id,
-          title: blog.title,
-          content: blog.content,
-          time: blog.createdAt,
+          blogId: blog.post.id,
+          title: blog.post.title,
+          content: blog.post.content,
+          time: blog.post.createdAt,
+          likes: blog.likesCount,
+          comments: blog.commentsCount,
         };
       })
     );
@@ -31,18 +35,10 @@ export default function BlogList() {
     fetchBlogs();
   }, []);
 
-  const onReadBlog = (blogId: string) => {
-    console.log("Read blog with id: ", blogId);
-  };
   return (
     <FlatList
       data={blogs}
-      renderItem={({ item }) => (
-        <BlogCard
-          blogInfo={item}
-          onReadBlog={() => onReadBlog(item.blogId)}
-        />
-      )}
+      renderItem={({ item }) => <BlogCard blogInfo={item} />}
       keyExtractor={(item) => item.blogId}
     />
   );

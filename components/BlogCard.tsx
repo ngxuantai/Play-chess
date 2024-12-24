@@ -11,6 +11,8 @@ interface Blog {
   title: string;
   content: string;
   time: string;
+  likes: number;
+  comments: number;
 }
 
 type BlogCardProps = {
@@ -24,7 +26,8 @@ const BlogCard = ({ blogInfo }: BlogCardProps) => {
 
   useEffect(() => {
     const imageRegex = /!\[.*?\]\((.*?)\)/;
-    const imageMatch = blogInfo.content.match(imageRegex);
+    const content = blogInfo.content || "";
+    const imageMatch = content.match(imageRegex);
     if (imageMatch) {
       setImageLink(imageMatch[1]);
     }
@@ -60,6 +63,24 @@ const BlogCard = ({ blogInfo }: BlogCardProps) => {
             color={Colors.BLACK}
           />
           <Text style={styles.statisticText}>{formatDate(blogInfo.time)}</Text>
+        </View>
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flexDirection: "row", gap: 5 }}>
+            <Icon
+              name="thumb-up-outline"
+              size={20}
+              color={Colors.DARKBLUE}
+            />
+            <Text style={styles.statisticText}>{blogInfo.likes}</Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 5 }}>
+            <Icon
+              name="comment"
+              size={20}
+              color={Colors.DARKBLUE}
+            />
+            <Text style={styles.statisticText}>{blogInfo.comments}</Text>
+          </View>
         </View>
       </View>
       <Divider />
@@ -106,8 +127,9 @@ const styles = StyleSheet.create({
     color: Colors.BLACK,
   },
   statistics: {
+    width: "100%",
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
   },
   statisticText: {
     fontSize: 14,

@@ -1,73 +1,94 @@
 import React, { useState, useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
-import { StyleSheet, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { blogApi } from "@/api/blog.api";
 import Markdown from "react-native-markdown-display";
 import CommentsSection from "@/components/CommentsSection";
-import { Comment } from "@/types/commentTypes";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { Divider } from "react-native-paper";
 
 const DetailBlog = () => {
   const { id } = useLocalSearchParams();
-  const [data, setData] = useState<any>(null);
+  const [post, setPost] = useState<any>(null);
+  const [liked, setLiked] = useState<boolean>(false);
+  const [likes, setLikes] = useState<number>(0);
+  const [comments, setComments] = useState<number>(0);
 
   const fetchBlog = async () => {
-    const response = await blogApi.getBlogById(id);
+    const response = await blogApi.getBlogById(Number(id));
+    console.log("Blog response:", response.data);
     return response.data;
   };
 
   useEffect(() => {
     fetchBlog().then((data) => {
-      setData(data);
+      setPost(data.post);
+      setLiked(data.liked);
+      setLikes(data.likesCount);
+      setComments(data.commentsCount);
     });
   }, []);
 
-  const sampleComments: Comment[] = [
-    {
-      id: "1",
-      text: "If we're all living and dying honestly, companies hire for three reasons: skills, presentation, and credibility.",
-      user: { id: 1, username: "Nick Lawrence" },
-    },
-    {
-      id: "2",
-      text: "Another main comment from User2",
-      user: { id: 2, username: "zzz" },
-    },
-    {
-      id: "3",
-      idParentCmt: "1",
-      text: "Hey thanks for sharing! I agree with your thoughts and you're spot on about going too deep into projects in a portfolio. Most of the time, any valuable information is under NDA or just wouldn't be shared out of the designer's own wish for privacy.",
-      user: {
-        id: 3,
-        username: "User3",
-      },
-    },
-    {
-      id: "4",
-      idParentCmt: "2",
-      text: "Reply to comment 2 from User4",
-      user: {
-        id: 4,
-        username: "User4",
-      },
-    },
-    {
-      id: "5",
-      idParentCmt: "1",
-      text: "Another reply to comment 1 from User5",
-      user: {
-        id: 5,
-        username: "User5",
-      },
-    },
-  ];
+  const handleLikeBlog = async () => {
+    blogApi
+      .likeBlog(Number(id))
+      .then((response) => {
+        if (response.data.liked) {
+          setLikes((prev) => prev + 1);
+          setLiked(true);
+        } else {
+          setLikes((prev) => prev - 1);
+          setLiked(false);
+        }
+      })
+      .catch((error) => {
+        console.log("Error liking blog:", error);
+      });
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {data?.content && (
+      {post?.content && (
         <>
-          <Markdown style={markdownStyles}>{data.content}</Markdown>
-          <CommentsSection initialComments={sampleComments} />
+          <Markdown style={markdownStyles}>{post.content}</Markdown>
         </>
+      )}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={styles.action}
+          onPress={() => handleLikeBlog()}
+        >
+          <Icon
+            name={liked ? "thumb-up" : "thumb-up-outline"}
+            size={20}
+            color={"gray"}
+          />
+          <Text style={styles.statisticText}>{likes}</Text>
+        </TouchableOpacity>
+        <View style={styles.action}>
+          <Icon
+            name="comment"
+            size={20}
+            color={"gray"}
+          />
+          <Text style={styles.statisticText}>{comments}</Text>
+        </View>
+      </View>
+      <Divider />
+
+      {post?.id && (
+        <CommentsSection
+          idBlog={post.id}
+          countComments={() => {
+            setComments((prev) => prev + 1);
+          }}
+        />
       )}
     </ScrollView>
   );
@@ -76,9 +97,27 @@ const DetailBlog = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    paddingBottom: 10,
+    paddingBottom: 20,
     backgroundColor: "#f9f9f9",
     flexGrow: 1,
+  },
+  actionContainer: {
+    width: "100%",
+    marginVertical: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  action: {
+    flexDirection: "row",
+    gap: 5,
+    width: "45%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  statisticText: {
+    fontSize: 18,
+    color: "#333",
   },
 });
 

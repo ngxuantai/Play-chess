@@ -15,7 +15,9 @@ export const formatMinsToHour = (mins: number) => {
 export const formatDateTimeVN = (dateStr: string) => {
   const date = new Date(dateStr);
 
-  const options = {
+  const vietnamTime = new Date(date.getTime() - 7 * 60 * 60 * 1000);
+
+  const options: Intl.DateTimeFormatOptions = {
     hour: "2-digit",
     minute: "2-digit",
     day: "2-digit",
@@ -23,5 +25,5 @@ export const formatDateTimeVN = (dateStr: string) => {
     year: "numeric",
   };
 
-  return new Intl.DateTimeFormat("vi-VN", options).format(date);
+  return new Intl.DateTimeFormat("vi-VN", options).format(vietnamTime);
 };
