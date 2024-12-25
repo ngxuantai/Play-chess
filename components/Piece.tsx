@@ -255,8 +255,10 @@ const Piece = React.memo(
                   style={[
                     styles.modalContainer,
                     {
-                      left: promotionMove.x - SIZE * 4.5,
-                      top: promotionMove.y + SIZE * 3,
+                      marginHorizontal: SIZE * 1.5,
+                      left: 0,
+                      right: 0,
+                      top: SIZE * 2.8,
                     },
                   ]}
                 >

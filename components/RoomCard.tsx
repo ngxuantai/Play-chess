@@ -42,7 +42,7 @@ const RoomCard = ({ roomInfo, onJoinRoom }: RoomCardProps) => {
             size={18}
             color={Colors.BLACK}
           />
-          : {roomInfo.timeControl + " phút"}
+          : {roomInfo.timeControl + " s"}
           {roomInfo.increment > 0 && " + " + roomInfo.increment + "s/di chuyển"}
         </Text>
         <View

@@ -72,7 +72,18 @@ const ChessResultModal = ({
                 }
                 style={styles.imageLogo}
               />
-              <Text style={styles.infoText}>{userName}</Text>
+              <Text
+                style={[
+                  styles.infoText,
+                  {
+                    maxWidth: "100%",
+                  },
+                ]}
+                ellipsizeMode="tail"
+                numberOfLines={1}
+              >
+                {userName}
+              </Text>
               <Text
                 style={[
                   styles.infoResult,
@@ -100,7 +111,18 @@ const ChessResultModal = ({
                 }
                 style={styles.imageLogo}
               />
-              <Text style={styles.infoText}>{opponentName}</Text>
+              <Text
+                style={[
+                  styles.infoText,
+                  {
+                    maxWidth: "100%",
+                  },
+                ]}
+                ellipsizeMode="tail"
+                numberOfLines={1}
+              >
+                {opponentName}
+              </Text>
               <Text
                 style={[
                   styles.infoResult,
@@ -193,6 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   info: {
+    maxWidth: "50%",
     flexDirection: "column",
     alignItems: "center",
     paddingHorizontal: 8,
