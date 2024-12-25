@@ -13,6 +13,7 @@ interface Blog {
   time: string;
   likes: number;
   comments: number;
+  thumbnail: string;
 }
 
 type BlogCardProps = {
@@ -25,13 +26,17 @@ const BlogCard = ({ blogInfo }: BlogCardProps) => {
   const [imageLink, setImageLink] = useState<string | null>(null);
 
   useEffect(() => {
-    const imageRegex = /!\[.*?\]\((.*?)\)/;
-    const content = blogInfo.content || "";
-    const imageMatch = content.match(imageRegex);
-    if (imageMatch) {
-      setImageLink(imageMatch[1]);
+    if (blogInfo.thumbnail) {
+      setImageLink(blogInfo.thumbnail);
+    } else {
+      const imageRegex = /!\[.*?\]\((.*?)\)/;
+      const content = blogInfo.content || "";
+      const imageMatch = content.match(imageRegex);
+      if (imageMatch) {
+        setImageLink(imageMatch[1]);
+      }
     }
-  }, [blogInfo.content]);
+  }, [blogInfo.content, blogInfo.thumbnail]);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd-MM-yyyy");

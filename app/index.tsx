@@ -73,9 +73,8 @@ export default function index() {
           icon="robot"
           text="Chơi với Máy tính"
           onPress={() => {
-            // dispatch(startLoading("Đang tạo bàn cờ"));
-            // router.push("/play-with-bot");
-            router.push("/detail-blog/1");
+            dispatch(startLoading("Đang tạo bàn cờ"));
+            router.push("/play-with-bot");
           }}
         />
         <GameButton
@@ -90,6 +89,7 @@ export default function index() {
           icon="newspaper-variant-outline"
           text="Blog"
           onPress={() => {
+            dispatch(startLoading("Đang tải bài viết"));
             router.push("/blog-list");
           }}
         />
