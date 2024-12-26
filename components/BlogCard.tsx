@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { useDispatch } from "react-redux";
+import { startLoading } from "@/redux/slices/loadingSlice";
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Divider } from "react-native-paper";
@@ -22,6 +24,7 @@ type BlogCardProps = {
 
 const BlogCard = ({ blogInfo }: BlogCardProps) => {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [imageLink, setImageLink] = useState<string | null>(null);
 
@@ -45,7 +48,10 @@ const BlogCard = ({ blogInfo }: BlogCardProps) => {
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/detail-blog/${blogInfo.blogId}`)}
+      onPress={() => {
+        dispatch(startLoading());
+        router.push(`/detail-blog/${blogInfo.blogId}`);
+      }}
     >
       {imageLink && (
         <Image
