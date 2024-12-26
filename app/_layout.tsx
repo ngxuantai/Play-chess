@@ -13,16 +13,16 @@ export default function RootLayout() {
   const [currentRoute, setCurrentRoute] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadToken = async () => {
-      try {
-        const token = await AsyncStorage.getItem("access_token");
-        if (token !== null) {
-          store.dispatch(getProfileAction(token));
-        }
-      } catch (error) {
-        console.log("Error loading token:", error);
-      }
-    };
+    // const loadToken = async () => {
+    //   try {
+    //     const token = await AsyncStorage.getItem("access_token");
+    //     if (token !== null) {
+    //       store.dispatch(getProfileAction(token));
+    //     }
+    //   } catch (error) {
+    //     console.log("Error loading token:", error);
+    //   }
+    // };
     const loadSettings = async () => {
       try {
         const settings = await AsyncStorage.getItem("settings");
@@ -38,7 +38,7 @@ export default function RootLayout() {
       }
     };
 
-    Promise.all([loadToken(), loadSettings()]);
+    Promise.all([loadSettings()]);
   }, []);
 
   return (
@@ -53,6 +53,10 @@ export default function RootLayout() {
           },
         }}
       >
+        <Stack.Screen
+          name="home"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="login"
           options={{ headerShown: false }}
