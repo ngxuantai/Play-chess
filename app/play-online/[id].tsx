@@ -389,7 +389,7 @@ export default function PlayOnline() {
             setShowChessResultModal(false);
             navigation.reset({
               index: 1,
-              routes: [{ name: "index" }, { name: "room-list" }],
+              routes: [{ name: "home" }, { name: "room-list" }],
             });
           }}
           // onPlayAgain={() => {
