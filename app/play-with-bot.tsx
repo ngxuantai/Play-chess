@@ -287,7 +287,7 @@ export default function PlayWithBot() {
             resetBoard(true);
             navigation.reset({
               index: 0,
-              routes: [{ name: "index" }],
+              routes: [{ name: "home" }],
             });
           }}
         />
