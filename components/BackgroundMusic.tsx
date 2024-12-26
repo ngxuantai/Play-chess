@@ -35,12 +35,10 @@ const BackgroundMusic: React.FC<{ currentRoute: string | null }> = ({
 
     const manageMusic = async () => {
       try {
-        if (currentRoute === "play-with-bot") {
-          await sound.pauseAsync();
-        } else if (isAppSoundPlaying) {
+        if (isAppSoundPlaying) {
           await sound.playAsync();
           await sound.setIsLoopingAsync(true);
-          await sound.setVolumeAsync(0.5);
+          await sound.setVolumeAsync(0.6);
         } else {
           await sound.pauseAsync();
         }
