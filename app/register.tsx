@@ -84,9 +84,14 @@ export default function Register() {
       if (redirectTo) {
         navigation.reset({
           index: 1,
-          routes: [{ name: "index" }, { name: redirectTo }],
+          routes: [{ name: "home" }, { name: redirectTo }],
         });
-      } else router.dismissAll();
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "home" }],
+        });
+      }
     }
   }, [isAuthenticated]);
 

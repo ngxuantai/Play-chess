@@ -79,10 +79,13 @@ export default function Login() {
       if (redirectTo) {
         navigation.reset({
           index: 1,
-          routes: [{ name: "index" }, { name: redirectTo }],
+          routes: [{ name: "home" }, { name: redirectTo }],
         });
       } else {
-        navigation.goBack();
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "home" }],
+        });
       }
     }
   }, [isAuthenticated]);

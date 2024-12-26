@@ -1,131 +1,93 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
-  StyleSheet,
-  Image,
   Text,
   TouchableOpacity,
   Dimensions,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import { useSelector, useDispatch } from "react-redux";
-import { selectIsAuthenticated } from "@/redux/selectors/authSelectors";
+import { selectAuth } from "@/redux/selectors/authSelectors";
 import { startLoading } from "@/redux/slices/loadingSlice";
 import { Colors } from "@/constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getProfileAction } from "@/redux/actions/authActions";
+import { AppDispatch } from "@/redux/store";
 
 const { width } = Dimensions.get("window");
 
-export default function index() {
+export default function Index() {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        if (token !== null) {
+          dispatch(getProfileAction(token));
+          setIsLoading(true);
+
+          setTimeout(() => {
+            router.replace("/home");
+          }, 3000);
+        }
+      } catch (error) {
+        console.log("Error loading token:", error);
+      }
+    };
+
+    Promise.all([loadToken()]);
+  }, []);
 
   return (
     <LinearGradient
       colors={[Colors.LIGHTBLUE, Colors.DARKBLUE]}
       style={styles.container}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/settings")}>
-          <Icon
-            name="cog"
-            size={34}
-            color={Colors.DARKBLUE}
-          />
-        </TouchableOpacity>
-      </View>
       <View style={styles.logoContainer}>
         <Image
           source={require("../assets/images/welcome-image.png")}
           style={styles.logo}
         />
-        <Text style={styles.title}>CHECKMATE!</Text>
-        <Text style={styles.subtitle}>Trải nghiệm cờ vua đỉnh cao</Text>
+        <Text style={styles.title}>Welcome!</Text>
+        <Text style={styles.subtitle}>
+          Chào mừng bạn đến với ứng dụng chơi cờ vua
+        </Text>
       </View>
 
-      <View>
-        <Image
-          source={require("../assets/images/home-image.png")}
-          style={{ width: "100%", height: 200 }}
-        />
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <GameButton
-          icon="web"
-          text="Chơi Trực tuyến"
-          onPress={() => {
-            if (isAuthenticated) {
-              router.push("/room-list");
-            } else {
-              router.push({
-                pathname: "/login",
-                params: {
-                  redirectTo: "room-list",
-                },
-              });
-            }
-          }}
-        />
-        <GameButton
-          icon="robot"
-          text="Chơi với Máy tính"
-          onPress={() => {
-            dispatch(startLoading("Đang tạo bàn cờ"));
-            router.push("/play-with-bot");
-          }}
-        />
-        <GameButton
-          icon="puzzle"
-          text="Câu đố"
-          onPress={() => {
-            dispatch(startLoading("Đang tạo câu đố"));
-            router.push("/play-puzzles");
-          }}
-        />
-        <GameButton
-          icon="newspaper-variant-outline"
-          text="Blog"
-          onPress={() => {
-            dispatch(startLoading("Đang tải bài viết"));
-            router.push("/blog-list");
-          }}
-        />
-      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push("/login")}
+        disabled={isLoading}
+      >
+        {isLoading && (
+          <ActivityIndicator
+            color={Colors.BLACK}
+            size={24}
+          />
+        )}
+        <Text style={styles.buttonText}>
+          {isLoading ? "Loading..." : "Đăng nhập"}
+        </Text>
+      </TouchableOpacity>
     </LinearGradient>
   );
 }
-
-const GameButton = ({
-  icon,
-  text,
-  onPress,
-}: {
-  icon: string;
-  text: string;
-  onPress?: () => void;
-}) => (
-  <TouchableOpacity
-    style={styles.button}
-    onPress={onPress}
-  >
-    <Icon
-      name={icon}
-      size={24}
-      color={Colors.DARKBLUE}
-    />
-    <Text style={styles.buttonText}>{text}</Text>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.WHITE,
     padding: 20,
-    justifyContent: "space-between",
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     position: "absolute",
@@ -135,21 +97,24 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginVertical: 30,
+    marginBottom: 150,
   },
   logo: {
-    width: 160,
-    height: 160,
+    width: 220,
+    height: 220,
     marginBottom: 10,
   },
   title: {
-    fontSize: 40,
+    fontSize: 50,
     fontWeight: "bold",
     color: Colors.BLACK,
   },
   subtitle: {
-    fontSize: 18,
+    maxWidth: "90%",
+    fontSize: 22,
     color: Colors.BLACK,
+    flexWrap: "wrap",
+    textAlign: "center",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -160,21 +125,21 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: Colors.LIGHTBLUE,
     padding: 10,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: width / 6,
     marginVertical: 10,
-    width: "48%",
+    minWidth: "48%",
     height: width / 6,
     elevation: 10,
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: 18,
     color: Colors.BLACK,
     marginLeft: 10,
     fontWeight: "bold",
-    width: "80%",
-    flexWrap: "wrap",
+    maxWidth: "80%",
   },
 });
