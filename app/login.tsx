@@ -81,7 +81,9 @@ export default function Login() {
           index: 1,
           routes: [{ name: "index" }, { name: redirectTo }],
         });
-      } else router.dismissAll();
+      } else {
+        navigation.goBack();
+      }
     }
   }, [isAuthenticated]);
 

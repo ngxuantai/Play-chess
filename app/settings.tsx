@@ -51,7 +51,7 @@ export default function Settings() {
         </View>
 
         <View style={styles.container}>
-          <Text style={styles.titleText}>Bàn cờ và quân cờ</Text>
+          {/* <Text style={styles.titleText}>Bàn cờ và quân cờ</Text> */}
           <Divider style={styles.divider} />
           <BackgroundSetting />
         </View>
