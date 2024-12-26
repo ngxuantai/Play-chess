@@ -148,26 +148,44 @@ export default function PlayWithBot() {
 
   const onTurn = useCallback(
     (move: Move) => {
-      const moveLog = chess.move(move);
-      if (moveLog) {
-        setMoveHistory((prev) => [...prev, moveLog]);
-        setState({
-          player: chess.turn(),
-          board: chess.board(),
-        });
-        setLastMove({
-          from: moveLog.from,
-          to: moveLog.to,
-        });
-        if (moveLog.captured) {
-          playSound("captured");
-        } else {
-          playSound("move");
-        }
-        setTimeout(() => {
-          checkGameState();
-        }, 3000);
-      }
+      // const moveLog = chess.move(move);
+      // if (moveLog) {
+      //   setMoveHistory((prev) => [...prev, moveLog]);
+      //   setState({
+      //     player: chess.turn(),
+      //     board: chess.board(),
+      //   });
+      //   setLastMove({
+      //     from: moveLog.from,
+      //     to: moveLog.to,
+      //   });
+      //   if (moveLog.captured) {
+      //     playSound("captured");
+      //   } else {
+      //     playSound("move");
+      //   }
+      //   setTimeout(() => {
+      //     checkGameState();
+      //   }, 3000);
+      // }
+      setState({
+        player: chess.turn(),
+        board: chess.board(),
+      });
+      setLastMove({
+        from: move.from,
+        to: move.to,
+      });
+      setMoveHistory((prev) => [...prev, move]);
+      playSound(move.captured ? "captured" : "move");
+      // if (move.captured) {
+      //   playSound("captured");
+      // } else {
+      //   playSound("move");
+      // }
+      setTimeout(() => {
+        checkGameState();
+      }, 3000);
     },
     [chess, state.player, checkGameState]
   );
@@ -194,15 +212,21 @@ export default function PlayWithBot() {
         checkGameState();
       }, 10000);
     }
-  }, [chess, side, checkGameState]);
+  }, [chess, side, checkGameState, result]);
 
   useEffect(() => {
-    if (side !== "" && state.board.length > 0 && state.player !== side) {
+    if (
+      side !== "" &&
+      state.board.length > 0 &&
+      state.player !== side &&
+      chess.isCheckmate() === false &&
+      chess.isDraw() === false
+    ) {
       setTimeout(() => {
         makeBotMove();
       }, 2000);
     }
-  }, [state.board, makeBotMove, side, state.player]);
+  }, [state.board, makeBotMove, side, state.player, chess]);
 
   const renderBoard = useMemo(() => {
     if (state.board.length === 0) return null;
@@ -221,6 +245,7 @@ export default function PlayWithBot() {
             flip={side !== "" && side === "b"}
             onTurn={onTurn}
             enabled={chess.turn() === side && side === square.color}
+            // isPuzzle={true}
           />
         );
       })

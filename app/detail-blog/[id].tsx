@@ -8,13 +8,20 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { blogApi } from "@/api/blog.api";
+import { useSelector, useDispatch } from "react-redux";
+import { selectIsLoading } from "@/redux/selectors/loadingSelectors";
+import { stopLoading } from "@/redux/slices/loadingSlice";
 import Markdown from "react-native-markdown-display";
 import CommentsSection from "@/components/CommentsSection";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Divider } from "react-native-paper";
+import GlobalLoading from "@/components/GlobalLoading";
 
 const DetailBlog = () => {
   const { id } = useLocalSearchParams();
+  const dispatch = useDispatch();
+  const isLoading = useSelector(selectIsLoading);
+
   const [post, setPost] = useState<any>(null);
   const [liked, setLiked] = useState<boolean>(false);
   const [likes, setLikes] = useState<number>(0);
@@ -27,12 +34,16 @@ const DetailBlog = () => {
   };
 
   useEffect(() => {
-    fetchBlog().then((data) => {
-      setPost(data.post);
-      setLiked(data.liked);
-      setLikes(data.likesCount);
-      setComments(data.commentsCount);
-    });
+    fetchBlog()
+      .then((data) => {
+        setPost(data.post);
+        setLiked(data.liked);
+        setLikes(data.likesCount);
+        setComments(data.commentsCount);
+      })
+      .finally(() => {
+        dispatch(stopLoading());
+      });
   }, []);
 
   const handleLikeBlog = async () => {
@@ -51,6 +62,14 @@ const DetailBlog = () => {
         console.log("Error liking blog:", error);
       });
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <GlobalLoading />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>

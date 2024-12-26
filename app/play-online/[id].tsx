@@ -210,6 +210,11 @@ export default function PlayOnline() {
         gameId: Number(id),
         move: move.san,
       });
+      setLastMove({
+        from: move.from,
+        to: move.to,
+      });
+      // playSound(move.captured ? "captured" : "move");
     },
     [chess, state.player]
   );
