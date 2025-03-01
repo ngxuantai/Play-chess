@@ -41,7 +41,7 @@
 4. Environment Variables
 
    - Duplicate the file `.env.example` and rename to `.env`
-   - Update the values of the environment variables
+   - Update the values of the environment variables.
 
 5. Start the app
 
